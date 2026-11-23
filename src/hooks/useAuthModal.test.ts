@@ -477,6 +477,100 @@ describe("useAuthModal", () => {
     });
   });
 
+  describe("conta que não confirmou o código do cadastro", () => {
+    // Resposta do back para login de conta `pending` (auth.service, USER_NOT_ACTIVE_MESSAGE)
+    const inactive = {
+      success: false,
+      status: 401,
+      message: "Conta inativa. Precisa fazer verificação de registro.",
+    } as const;
+    const loggedIn = {
+      success: true,
+      data: { data: { user: { id: "u1", email: "ana@example.com", name: "Ana" } } },
+    } as never;
+
+    async function loginInactive() {
+      api.login.mockResolvedValueOnce(inactive);
+      const hook = renderModal();
+      type(hook.result, { email: "Ana@Example.com", password: "Senha@1" });
+      await act(async () => {
+        await hook.result.current.handleSubmit();
+      });
+      return hook;
+    }
+
+    it("login de conta inativa leva para a etapa do código com o e-mail do login", async () => {
+      const { result } = await loginInactive();
+
+      expect(result.current.step).toBe("otp");
+      expect(result.current.otpData).toEqual({ email: "ana@example.com", code: "" });
+      expect(result.current.submitMessage?.type).toBe("error");
+      expect(result.current.submitMessage?.text).toMatch(/ainda não foi confirmada/);
+      expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    });
+
+    it("401 de senha errada continua no formulário", async () => {
+      api.login.mockResolvedValue({ success: false, status: 401, message: "Email ou senha inválidos." });
+      const { result } = renderModal();
+      type(result, { email: "ana@example.com", password: "errada" });
+
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+
+      expect(result.current.step).toBe("form");
+      expect(result.current.submitMessage).toEqual({ type: "error", text: "Email ou senha inválidos." });
+    });
+
+    it("código certo confirma e já entra com a senha digitada no login", async () => {
+      const { result } = await loginInactive();
+      api.verifyOtp.mockResolvedValue({ success: true });
+      api.login.mockResolvedValueOnce(loggedIn);
+      act(() => result.current.setOtpData((prev) => ({ ...prev, code: "123456" })));
+
+      await act(async () => {
+        await result.current.handleOTPSubmit();
+      });
+
+      expect(api.verifyOtp).toHaveBeenCalledWith({ email: "ana@example.com", code: "123456" });
+      expect(api.login).toHaveBeenLastCalledWith({ email: "ana@example.com", password: "Senha@1" });
+      expect(useAuthStore.getState().user).toMatchObject({ id: "u1" });
+      expect(onAuthSuccess).toHaveBeenCalledWith(expect.objectContaining({ id: "u1" }));
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    it("se o login depois da confirmação falhar, volta ao login avisando que a conta foi confirmada", async () => {
+      const { result } = await loginInactive();
+      api.verifyOtp.mockResolvedValue({ success: true });
+      api.login.mockResolvedValueOnce({ success: false, status: 500, message: "Erro 500" });
+      act(() => result.current.setOtpData((prev) => ({ ...prev, code: "123456" })));
+
+      await act(async () => {
+        await result.current.handleOTPSubmit();
+      });
+
+      expect(result.current.step).toBe("form");
+      expect(result.current.activeTab).toBe("login");
+      expect(result.current.submitMessage).toEqual({
+        type: "success",
+        text: "Conta confirmada! Entre com seu e-mail e senha.",
+      });
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it("código vindo do cadastro não tenta logar", async () => {
+      api.verifyOtp.mockResolvedValue({ success: true });
+      const { result } = renderModal();
+      act(() => result.current.setOtpData({ email: "ana@example.com", code: "123456" }));
+
+      await act(async () => {
+        await result.current.handleOTPSubmit();
+      });
+
+      expect(api.login).not.toHaveBeenCalled();
+    });
+  });
+
   describe("recuperar senha", () => {
     it("envia o e-mail sem espaços e em minúsculas e passa para a redefinição", async () => {
       api.forgotPassword.mockResolvedValue({ success: true });

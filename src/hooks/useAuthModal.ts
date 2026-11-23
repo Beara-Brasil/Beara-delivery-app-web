@@ -5,6 +5,15 @@ import { normalizeAuthUser } from "@/stores/auth-store";
 import type { RawAuthUser } from "@/services/api";
 import { formatCpfDisplay, getBirthDateError, maskBirthDate } from "@/utils";
 
+// Login de conta que não confirmou o código do cadastro. O back responde 401
+// com essa frase em `message` e não manda um `code` estável, por isso o
+// reconhecimento é pelo texto (ver divergências em docs/dados-e-backend.md).
+const INACTIVE_ACCOUNT_PATTERN = /conta inativa/i;
+
+function isInactiveAccountError(response: { status?: number; message?: string }) {
+  return response.status === 401 && INACTIVE_ACCOUNT_PATTERN.test(response.message ?? "");
+}
+
 interface UseAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -32,6 +41,9 @@ export function useAuthModal({
     name: "", email: "", cpf: "", phone: "", password: "", confirmPassword: "", birthDate: "", role: "client",
   });
   const [otpData, setOtpData] = useState({ email: "", code: "" });
+  // De onde a pessoa chegou na etapa do código. Vindo do login, a senha já
+  // está em `loginData` e dá para entrar direto depois de confirmar.
+  const [otpOrigin, setOtpOrigin] = useState<"register" | "login">("register");
   // Aceite dos termos e da política (LDMF-281). Fora do `registerData` de
   // propósito: o backend não tem esse campo e roda com forbidNonWhitelisted,
   // então mandar no corpo do cadastro derrubaria a requisição com 400.
@@ -140,6 +152,7 @@ export function useAuthModal({
     setLoginData({ email: "", password: "" });
     setRegisterData({ name: "", email: "", cpf: "", phone: "", password: "", confirmPassword: "", birthDate: "", role: "client" });
     setOtpData({ email: "", code: "" });
+    setOtpOrigin("register");
     setAcceptedTerms(false);
     setForgotPasswordData({ email: "" });
     setResetPasswordData({ email: "", code: "", newPassword: "", confirmPassword: "" });
@@ -154,6 +167,25 @@ export function useAuthModal({
     onClose();
   };
 
+  // Grava o usuário no store e fecha o modal. Devolve false se a resposta
+  // não trouxe usuário, para quem chamou decidir a mensagem de erro.
+  const completeLogin = (
+    loginResponse: Awaited<ReturnType<typeof apiService.login>>,
+  ): boolean => {
+    const user = loginResponse.success ? loginResponse.data?.data?.user : undefined;
+    if (!user) return false;
+
+    const companyId = user.companyId ?? null;
+    const userRole = user.role || "client";
+    const userForStore = normalizeAuthUser(user);
+
+    zustandLogin(userForStore);
+    onAuthSuccess?.({ ...user, role: userRole, companyId });
+    onClose();
+    resetForm();
+    return true;
+  };
+
   const handleSubmit = async () => {
     setIsLoading(true);
     setSubmitMessage(null);
@@ -162,19 +194,20 @@ export function useAuthModal({
       if (activeTab === "login") {
         const loginResponse = await apiService.login(loginData);
 
-        if (loginResponse.success && loginResponse.data?.data?.user) {
-          const user = loginResponse.data.data.user;
-          const companyId = user.companyId ?? null;
-          const userRole = user.role || "client";
-          const userForStore = normalizeAuthUser(user);
+        if (completeLogin(loginResponse)) {
+          return;
+        }
 
-          const userWithRole = { ...user, role: userRole, companyId };
-          zustandLogin(userForStore);
-
-          if (userWithRole) onAuthSuccess?.(userWithRole);
-          else onAuthSuccess?.();
-          onClose();
-          resetForm();
+        if (isInactiveAccountError(loginResponse)) {
+          // Cadastro que fechou o modal antes de digitar o código: sem isso a
+          // conta ficava presa, sem caminho de volta para a confirmação.
+          setOtpData({ email: loginData.email, code: "" });
+          setOtpOrigin("login");
+          setStep("otp");
+          setSubmitMessage({
+            type: "error",
+            text: "Sua conta ainda não foi confirmada. Digite o código que enviamos para o seu e-mail no cadastro.",
+          });
         } else {
           setSubmitMessage({ type: "error", text: loginResponse.message || "Email ou senha incorretos. Tente novamente." });
         }
@@ -229,7 +262,15 @@ export function useAuthModal({
     setSubmitMessage(null);
     try {
       const response = await apiService.verifyOtp({ email: otpData.email, code: otpData.code });
-      if (response.success) {
+      if (response.success && otpOrigin === "login") {
+        // Conta confirmada a partir do login: entra com a senha já digitada.
+        const loginResponse = await apiService.login(loginData);
+        if (!completeLogin(loginResponse)) {
+          setStep("form");
+          setActiveTab("login");
+          setSubmitMessage({ type: "success", text: "Conta confirmada! Entre com seu e-mail e senha." });
+        }
+      } else if (response.success) {
         setSubmitMessage({ type: "success", text: "Conta verificada com sucesso!" });
         setTimeout(() => {
           onAuthSuccess?.();
