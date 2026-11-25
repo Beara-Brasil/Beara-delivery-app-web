@@ -1,268 +1,189 @@
-"use client";
-
-import { MainHeader } from "@/components/main-header";
-import { BearDeliveryLogo } from "@/components/ui/bear-delivery-logo";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Clock,
-  CreditCard,
-  Shield,
-  ShoppingBag,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
-const STATS = [
-  { value: "500+", label: "Restaurantes" },
-  { value: "50k+", label: "Pedidos/Mês" },
-  { value: "4.8★", label: "Avaliação" },
-];
+import { BearaDeliveryMark, BearaDeliveryWordmark } from "./_components/beara-delivery-mark";
+import { FaqList } from "./_components/faq-list";
+import { LandingHeader } from "./_components/landing-header";
+import { OrderBoardDemo } from "./_components/order-board-demo";
+import { ADVANTAGES, HERO, REGISTER_HREF, STEPS } from "./content";
+import { displayFont, monoFont, sansFont } from "./fonts";
+import "./landing.css";
 
-const LIGHT_GRADIENT =
-  "from-[var(--color-brand-400)] to-[var(--color-brand-500)]";
+export const metadata: Metadata = {
+  title: "Para restaurantes",
+  description:
+    "Cadastre seu restaurante no Beara Delivery e receba pedidos de clientes da sua região.",
+};
 
-const BENEFITS = [
-  {
-    icon: Users,
-    title: "Alcance Milhares de Clientes",
-    description:
-      "Conecte-se com uma base crescente de usuários famintos na sua região",
-  },
-  {
-    icon: TrendingUp,
-    title: "Aumente suas Vendas",
-    description:
-      "Sistema completo de gestão de pedidos para maximizar seu faturamento",
-  },
-  {
-    icon: Clock,
-    title: "Entrega Rápida",
-    description: "Entregas em até 30 minutos com nossa rede de entregadores",
-  },
-  {
-    icon: ShoppingBag,
-    title: "Gestão Simplificada",
-    description: "Painel completo para gerenciar pedidos, menu e relatórios",
-  },
-  {
-    icon: Shield,
-    title: "Pagamento Seguro",
-    description: "Transações protegidas e repasse automático em 48h",
-  },
-  {
-    icon: CreditCard,
-    title: "Sem Taxa de Adesão",
-    description: "Comece a vender sem custos iniciais. Pague apenas por venda",
-  },
-];
-
-const STEPS = [
-  {
-    number: 1,
-    title: "Cadastre seu Restaurante",
-    description:
-      "Preencha o formulário com as informações do seu estabelecimento",
-  },
-  {
-    number: 2,
-    title: "Configure seu Menu",
-    description: "Adicione seus pratos, fotos e preços através do painel",
-  },
-  {
-    number: 3,
-    title: "Comece a Vender",
-    description: "Receba pedidos e gerencie entregas em tempo real",
-  },
-];
+const sectionTitle =
+  "lb-display m-0 text-[clamp(32px,4.5vw,52px)] leading-none font-extrabold tracking-[-.03em] text-balance";
+const kicker = "lb-mono text-[13px] text-(--lb-accent)";
+const ctaPrimary =
+  "inline-flex min-h-12 items-center rounded-full bg-(--lb-cta-bg) px-[26px] py-4 text-base font-semibold text-(--lb-cta-fg) transition-colors hover:bg-(--lb-cta-hover)";
 
 export default function RestaurantLandingPage() {
-  const router = useRouter();
-
   return (
-    <div className="min-h-screen bg-muted relative overflow-hidden">
-      {/* Manchas paradas de proposito: animar o blur refazia o desfoque a cada
-          quadro, mesmo com a tela parada (ver animated-background.tsx). */}
-      <div className="absolute inset-0">
-        <div className="absolute top-20 left-10 w-64 h-64 bg-gradient-to-r from-brand-400/20 to-brand-400/20 rounded-full blur-3xl" />
-        <div className="absolute top-40 right-20 w-48 h-48 bg-gradient-to-r from-brand-400/15 to-brand-400/15 rounded-full blur-2xl" />
-        <div className="absolute bottom-40 left-1/4 w-80 h-80 bg-gradient-to-r from-yellow-400/10 to-brand-400/10 rounded-full blur-3xl" />
-      </div>
+    <div
+      className={`lb flex min-h-screen flex-col antialiased ${displayFont.variable} ${sansFont.variable} ${monoFont.variable}`}
+    >
+      <LandingHeader />
 
-      <main className="relative">
-        <div className="pt-6 px-4 md:px-8 relative z-10">
-          <MainHeader
-            showLogo
-            showSearch={false}
-            showLocation={false}
-            showCart={false}
-            showMenu
+      <main className="flex flex-1 flex-col">
+        <section className="relative overflow-hidden bg-(--lb-hero-bg) text-(--lb-hero-ink)">
+          <BearaDeliveryMark
+            decorative
+            size={640}
+            className="pointer-events-none absolute right-[-6%] bottom-[-14%] h-auto w-[min(52vw,640px)] text-(--lb-hero-mark) opacity-[.09]"
           />
-        </div>
+          <div
+            className="pointer-events-none absolute top-[-30%] right-[-8%] aspect-square w-[min(70vw,820px)] rounded-full bg-[radial-gradient(circle,var(--lb-hero-glow)_0%,transparent_70%)]"
+            aria-hidden
+          />
+          <svg
+            viewBox="0 0 1440 80"
+            preserveAspectRatio="none"
+            aria-hidden
+            className="pointer-events-none absolute right-0 bottom-[-1px] left-0 block h-[clamp(32px,5vw,72px)] w-full"
+          >
+            <path d="M0,80 L0,40 C240,80 480,0 720,30 C960,60 1200,10 1440,40 L1440,80 Z" fill="var(--lb-hero-wave)" />
+          </svg>
 
-        <section className="pt-20 pb-16 px-4">
-          <div className="max-w-4xl mx-auto text-center space-y-6">
-            <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight">
-              <span className="text-foreground">
-                Leve seu Restaurante para o{" "}
+          <div className="relative mx-auto grid max-w-[1240px] grid-cols-[repeat(auto-fit,minmax(min(100%,440px),1fr))] items-center gap-[clamp(40px,5vw,64px)] px-4 pt-[clamp(48px,8vw,104px)] pb-[clamp(72px,10vw,136px)] sm:px-[clamp(16px,4vw,40px)]">
+            <div className="flex flex-col gap-6">
+              <span className="lb-mono self-start rounded-full bg-(--lb-surface) px-3.5 py-2 text-[13px] text-(--lb-accent)">
+                {HERO.kicker}
               </span>
-              <span
-                className={`bg-gradient-to-r ${LIGHT_GRADIENT} bg-clip-text text-transparent`}
-              >
-                Próximo Nível
-              </span>
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8">
-              Alcance milhares de clientes e faça seu negócio crescer com a
-              plataforma de delivery mais rápida e confiável.
-            </p>
-            <Button
-              size="lg"
-              variant="secondary"
-              onClick={() => router.push("/restaurant-register")}
-              className="h-14 px-8 rounded-2xl text-lg font-bold shadow-xl hover:shadow-2xl cursor-pointer"
-            >
-              Cadastrar Meu Restaurante Grátis
-            </Button>
-            <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto">
-              {STATS.map(({ value, label }) => (
-                <div key={label}>
-                  <div
-                    className={`text-3xl md:text-4xl font-bold bg-gradient-to-r ${LIGHT_GRADIENT} bg-clip-text text-transparent`}
-                  >
-                    {value}
-                  </div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    {label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="beneficios" className="py-20 px-4 relative">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4">
-                Por que escolher o Beara Delivery?
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Tudo que você precisa para crescer seu negócio
+              <h1 className="lb-display m-0 text-[clamp(40px,6.5vw,80px)] leading-[.95] font-extrabold tracking-[-.035em] text-balance">
+                {HERO.title}
+              </h1>
+              <p className="m-0 max-w-[46ch] text-[clamp(17px,1.5vw,20px)] leading-normal text-pretty text-(--lb-hero-soft)">
+                {HERO.text}
               </p>
-            </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {BENEFITS.map(({ icon: Icon, title, description }) => (
-                <Card
-                  key={title}
-                  className="border-0 bg-card/80 shadow-lg hover:shadow-2xl transition-all duration-500 rounded-2xl"
+              <div className="flex flex-wrap gap-3">
+                <Link href={REGISTER_HREF} className={ctaPrimary}>
+                  Cadastrar meu restaurante
+                </Link>
+                <Link
+                  href="#como-funciona"
+                  className="inline-flex min-h-12 items-center rounded-full border-[1.5px] border-(--lb-hero-ink) px-[26px] py-4 text-base font-semibold"
                 >
-                  <CardContent className="p-6">
-                    {/* QUADRADINHO AGORA CLARO */}
-                    <div
-                      className={`w-12 h-12 rounded-xl bg-gradient-to-br ${LIGHT_GRADIENT} flex items-center justify-center mb-4 shadow-[0_4px_12px_rgba(255,122,0,0.25)]`}
-                    >
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold mb-2">{title}</h3>
-                    <p className="text-muted-foreground">{description}</p>
-                  </CardContent>
-                </Card>
-              ))}
+                  Como funciona
+                </Link>
+              </div>
             </div>
+            <OrderBoardDemo />
           </div>
         </section>
 
         <section
           id="como-funciona"
-          className="py-20 px-4 bg-card/50 relative"
+          className="mx-auto flex w-full max-w-[1240px] scroll-mt-20 flex-col gap-10 px-4 py-[clamp(64px,8vw,104px)] sm:px-[clamp(16px,4vw,40px)]"
         >
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4">
-                Como Funciona
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Comece a vender em 3 passos simples
-              </p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-8">
-              {STEPS.map(({ number, title, description }) => (
-                <div key={number} className="text-center">
-                  <div
-                    className={`w-16 h-16 rounded-full bg-gradient-to-br ${LIGHT_GRADIENT} flex items-center justify-center mx-auto mb-4 text-white font-bold text-2xl shadow-[0_6px_16px_rgba(255,122,0,0.3)]`}
+          <div className="flex max-w-[640px] flex-col gap-3">
+            <span className={kicker}>COMO FUNCIONA</span>
+            <h2 className={sectionTitle}>Do cadastro ao primeiro pedido.</h2>
+          </div>
+          <ol className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-4 p-0">
+            {STEPS.map((step, index) => {
+              const last = index === STEPS.length - 1;
+              return (
+                <li
+                  key={step.n}
+                  className={`flex flex-col gap-3.5 rounded-[20px] p-7 ${
+                    last
+                      ? "bg-(--lb-yellow) text-(--lb-on-yellow)"
+                      : "border border-(--lb-line) bg-(--lb-surface)"
+                  }`}
+                >
+                  <span
+                    className={`lb-mono flex size-11 items-center justify-center rounded-xl ${
+                      last ? "bg-[#1C120C] text-white" : "bg-(--lb-step-bg) text-(--lb-step-fg)"
+                    }`}
+                    aria-hidden
                   >
-                    {number}
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">{title}</h3>
-                  <p className="text-muted-foreground">{description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+                    {step.n}
+                  </span>
+                  <h3 className="lb-display m-0 text-[22px] font-semibold">{step.title}</h3>
+                  <p className={`m-0 text-[15px] leading-normal ${last ? "" : "text-(--lb-muted)"}`}>
+                    {step.text}
+                  </p>
+                </li>
+              );
+            })}
+          </ol>
         </section>
 
-        <section className="py-20 px-4 relative overflow-hidden">
-          <div
-            className={`absolute inset-0 bg-gradient-to-r ${LIGHT_GRADIENT}`}
-          />
-          <div className="max-w-4xl mx-auto text-center relative z-10">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Pronto para começar?
-            </h2>
-            <p className="text-xl text-white/90 mb-8">
-              Cadastre seu restaurante agora e comece a receber pedidos hoje
-              mesmo
-            </p>
-            <Button
-              size="lg"
-              variant="secondary"
-              onClick={() => router.push("/restaurant-register")}
-              className="h-14 px-8 rounded-2xl text-lg font-bold shadow-xl hover:shadow-2xl cursor-pointer"
-            >
-              Cadastrar Meu Restaurante Grátis
-            </Button>
-          </div>
-        </section>
-
-        <footer className="border-t bg-card/80 py-8 px-4 relative">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <Link href="/" className="shrink-0">
-                <BearDeliveryLogo />
-              </Link>
-              <nav className="flex gap-6 text-sm text-muted-foreground">
-                <Link
-                  href="/"
-                  className="hover:text-brand-500 transition-colors"
-                >
-                  Home
-                </Link>
-                <a
-                  href="#beneficios"
-                  className="hover:text-brand-500 transition-colors"
-                >
-                  Benefícios
-                </a>
-                <a
-                  href="#como-funciona"
-                  className="hover:text-brand-500 transition-colors"
-                >
-                  Como Funciona
-                </a>
-                <a href="#" className="hover:text-brand-500 transition-colors">
-                  Contato
-                </a>
-              </nav>
-              <p className="text-sm text-muted-foreground">
-                © 2025 Beara Delivery. Todos os direitos reservados.
+        <section
+          id="vantagens"
+          className="scroll-mt-20 border-y border-(--lb-line) bg-(--lb-surface)"
+        >
+          <div className="mx-auto grid max-w-[1240px] grid-cols-[repeat(auto-fit,minmax(min(100%,400px),1fr))] items-start gap-[clamp(32px,5vw,64px)] px-4 py-[clamp(64px,8vw,104px)] sm:px-[clamp(16px,4vw,40px)]">
+            <div className="flex flex-col gap-3 md:sticky md:top-[100px]">
+              <span className={kicker}>VANTAGENS</span>
+              <h2 className={sectionTitle}>Mais pedidos, menos dor de cabeça.</h2>
+              <p className="m-0 max-w-[40ch] text-lg leading-[1.55] text-(--lb-muted)">
+                Tudo o que o restaurante precisa para vender por delivery, num só lugar.
               </p>
             </div>
+            <ul className="m-0 flex list-none flex-col border-t-2 border-(--lb-ink) p-0">
+              {ADVANTAGES.map((item) => (
+                <li
+                  key={item.n}
+                  className="grid grid-cols-[48px_minmax(0,1fr)] gap-4 border-b border-(--lb-line) py-6"
+                >
+                  <span className="lb-mono pt-1 text-[13px] text-(--lb-accent)" aria-hidden>
+                    {item.n}
+                  </span>
+                  <div className="flex flex-col gap-1.5">
+                    <h3 className="lb-display m-0 text-[22px] font-semibold tracking-[-.01em]">{item.title}</h3>
+                    <p className="m-0 text-base leading-normal text-(--lb-muted)">{item.text}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
-        </footer>
+        </section>
+
+        <section
+          id="duvidas"
+          className="mx-auto flex w-full max-w-[880px] scroll-mt-20 flex-col gap-8 px-4 py-[clamp(64px,8vw,104px)] sm:px-[clamp(16px,4vw,40px)]"
+        >
+          <div className="flex flex-col gap-3">
+            <span className={kicker}>DÚVIDAS</span>
+            <h2 className={sectionTitle}>Perguntas frequentes</h2>
+          </div>
+          <FaqList />
+          <div className="flex flex-col items-start gap-4 rounded-[20px] bg-(--lb-hero-bg) p-7 text-(--lb-hero-ink) sm:flex-row sm:items-center sm:justify-between">
+            <p className="lb-display m-0 text-2xl font-extrabold tracking-[-.02em]">
+              Pronto para começar?
+            </p>
+            <Link href={REGISTER_HREF} className={ctaPrimary}>
+              Cadastrar meu restaurante
+            </Link>
+          </div>
+        </section>
       </main>
+
+      <footer className="bg-(--lb-footer-bg) text-(--lb-footer-text)">
+        <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-4 px-4 py-8 text-sm sm:px-[clamp(16px,4vw,40px)]">
+          <Link href="/" className="flex items-center gap-2.5 text-white" aria-label="Beara Delivery: início">
+            <BearaDeliveryMark size={26} className="text-white" />
+            <BearaDeliveryWordmark accentClassName="text-(--lb-yellow)" />
+          </Link>
+          <nav aria-label="Rodapé" className="flex flex-wrap gap-x-5">
+            <Link href="/" className="inline-flex min-h-11 items-center hover:text-white">
+              Pedir no app
+            </Link>
+            <Link href="/privacy" className="inline-flex min-h-11 items-center hover:text-white">
+              Privacidade
+            </Link>
+            <Link href="/terms" className="inline-flex min-h-11 items-center hover:text-white">
+              Termos
+            </Link>
+          </nav>
+          <span>© 2026 Beara</span>
+        </div>
+      </footer>
     </div>
   );
 }
