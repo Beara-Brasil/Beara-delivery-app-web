@@ -52,6 +52,8 @@ Legenda da última coluna:
 | Cópia de prato nasce indisponível e abre no modal de edição | Definido no card; a pessoa revisa antes de liberar | LDMF-489 | ✅ |
 | Tema escuro desligado (`THEME_LOCKED_TO_LIGHT = true`) | O design escuro não foi revisado | — | 🔁 Os tokens já existem; falta revisar tela por tela |
 | CSP em modo "só relata" | Observar o que quebraria antes de bloquear | LDMF-426 | 🔁 Ligar `CSP_ENFORCE` depois de conferir os relatos |
+| Landing de restaurantes com identidade própria (fontes Bricolage, Instrument Sans e JetBrains Mono; laranja `#F26B1D`), escopada em `.lb` em `restaurant-landing-page/landing.css` | É a família da marca Beara (o site institucional usa as mesmas fontes e símbolo, em azul e ciano). Só esta rota usa por enquanto; trocar o `brand-500` do app inteiro é decisão separada | LDMF-538 | 🔁 Rever quando decidirem levar a identidade para o cadastro e o resto do app |
+| Landing de restaurantes sem números de vitrine, tempo de entrega nem promoções | "500+ restaurantes", "50k pedidos", "4.8★", "entrega em 30 min" e "repasse em 48h" não tinham fonte. O tempo de entrega está escondido no app (LDMF-534), não há promoção ativa e a entrega é do próprio restaurante | LDMF-538 | ✅ Só volte a citar quando existir de verdade; os textos ficam em `content.ts` |
 
 ## Código
 
