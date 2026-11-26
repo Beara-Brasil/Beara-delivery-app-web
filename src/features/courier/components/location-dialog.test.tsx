@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useCourierPositionStore } from "@/stores/courier-position-store";
+import { useCourierPositionStore } from "@/features/courier/stores/courier-position-store";
 import { LocationDialog } from "./location-dialog";
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));

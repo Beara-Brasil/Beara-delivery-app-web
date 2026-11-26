@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useCourierPositionStore } from "@/stores/courier-position-store";
+import { useCourierPositionStore } from "@/features/courier/stores/courier-position-store";
 import { useCourierPosition } from "./use-courier-position";
 
 const fetchMock = vi.fn();

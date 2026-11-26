@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { DeliveryTabBar } from "@/components/delivery-dashboard/delivery-tab-bar";
+import { DeliveryTabBar } from "@/features/courier/components/delivery-tab-bar";
 import ProtectedRoute from "@/components/protected-route";
 import { ROUTE_PERMISSIONS } from "@/utils/permissions";
 

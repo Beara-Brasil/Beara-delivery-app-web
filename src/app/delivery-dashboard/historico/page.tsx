@@ -2,13 +2,13 @@
 
 import { RefreshCw } from "lucide-react";
 
-import { DeliveryCard } from "@/components/delivery-dashboard/delivery-card";
+import { DeliveryCard } from "@/features/courier/components/delivery-card";
 import {
   HeaderIconButton,
   ScreenHeader,
-} from "@/components/delivery-dashboard/screen-header";
+} from "@/features/courier/components/screen-header";
 import { Button } from "@/components/ui/button";
-import { useDeliveryHistory } from "@/hooks/use-delivery-driver";
+import { useDeliveryHistory } from "@/features/courier/hooks/use-delivery-driver";
 
 /**
  * Histórico do entregador: concluídas e canceladas.

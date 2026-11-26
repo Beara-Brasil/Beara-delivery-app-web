@@ -15,8 +15,8 @@ import { socketAuthProvider } from "@/lib/socket-auth";
 import {
   requestPaymentMethodChange,
   type PaymentChangeRequest,
-} from "@/services/manager-requests";
-import { useCourierPositionStore } from "@/stores/courier-position-store";
+} from "@/features/courier/services/manager-requests";
+import { useCourierPositionStore } from "@/features/courier/stores/courier-position-store";
 import {
   apiService,
   MAX_PAGE_LIMIT,

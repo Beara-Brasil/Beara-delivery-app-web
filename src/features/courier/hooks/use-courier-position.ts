@@ -7,7 +7,7 @@ import {
   isPositionFresh,
   useCourierPositionStore,
   type CourierPosition,
-} from "@/stores/courier-position-store";
+} from "@/features/courier/stores/courier-position-store";
 import type { Coords } from "@/types/restaurant";
 
 /**
