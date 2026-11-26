@@ -47,10 +47,15 @@ function toLatLngBounds(bounds: MapBounds): LatLngBoundsExpression {
   ];
 }
 
-/** Liga ou desliga tudo o que mexe na câmera. O clique no mapa fica sempre. */
+/**
+ * Liga ou desliga tudo o que mexe na câmera. O clique no mapa fica sempre.
+ * A roda do mouse entra junto: só dá zoom na etapa livre, e nas travadas
+ * continua rolando o formulário.
+ */
 function setCameraLocked(map: LeafletMap, locked: boolean) {
   const handlers = [
     map.dragging,
+    map.scrollWheelZoom,
     map.touchZoom,
     map.doubleClickZoom,
     map.boxZoom,

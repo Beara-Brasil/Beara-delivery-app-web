@@ -183,5 +183,20 @@ describe("LeafletAddressMap", () => {
       );
       expect(container(root)).toHaveClass("leaflet-grab");
     });
+
+    it("roda do mouse dá zoom só na etapa livre", () => {
+      // `addHooks` roda quando o handler da roda é ligado.
+      const wheelOn = vi.spyOn(L.Map.ScrollWheelZoom.prototype, "addHooks");
+      const { rerender } = render(
+        <LeafletAddressMap value={null} onSelect={vi.fn()} stage="city" viewBounds={ES} />,
+      );
+      expect(wheelOn).not.toHaveBeenCalled();
+
+      rerender(
+        <LeafletAddressMap value={CASTELO} onSelect={vi.fn()} stage="free" viewBounds={ES} limitBounds={ES} />,
+      );
+      expect(wheelOn).toHaveBeenCalledTimes(1);
+      wheelOn.mockRestore();
+    });
   });
 });

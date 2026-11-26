@@ -57,7 +57,7 @@ Legenda da última coluna:
 
 | Decisão | Por quê | Continuar? |
 | --- | --- | --- |
-| Mapa do endereço com câmera travada por etapa (Brasil → estado → cidade) e livre só dentro da cidade com 1,5 km de folga; sem botões + e − | Pedido do produto: o mapa acompanha os campos, sem o cliente se perder. Detalhes em [mapa-do-endereco.md](./mapa-do-endereco.md) (LDMF-542) | 🔁 Os botões estão só ocultos (`zoomControl`) |
+| Mapa do endereço com câmera travada por etapa (Brasil → estado → cidade) e livre só dentro da cidade com 1,5 km de folga; sem botões + e −; a roda do mouse só dá zoom na etapa livre | Pedido do produto: o mapa acompanha os campos, sem o cliente se perder. Nas etapas travadas a roda rola o formulário. Detalhes em [mapa-do-endereco.md](./mapa-do-endereco.md) (LDMF-542) | 🔁 Os botões estão só ocultos (`zoomControl`) |
 | Contorno de estado e cidade do mapa vem da malha do IBGE, não do Nominatim | No Nominatim o retângulo do ES ia até Trindade (1.000 km mar adentro), e o de PE e RN também pega ilhas (LDMF-542) | ✅ |
 | O pino preenche os campos, mudando só o que mudou; o Número nunca muda | Pedido do produto; o mapa erra o número da casa. Os campos entram sem limpar os seguintes nem mover o pino (LDMF-542) | ✅ Ver `decidePinFill` e `fillFromPin` |
 | Algumas imagens continuam `<img>` (foto do cliente, logo do restaurante, prato, miniaturas do entregador) | Host não declarado no `next.config` derruba a tela inteira | 🔁 Até decisão em card próprio (`CLAUDE.md`) |
