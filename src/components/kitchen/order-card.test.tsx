@@ -59,3 +59,22 @@ describe("KitchenOrderCard - troco", () => {
     expect(screen.queryByText(/de troco/)).not.toBeInTheDocument();
   });
 });
+
+describe("KitchenOrderCard - pago online (ML-01)", () => {
+  it("pedido pago pelo Mercado Pago mostra o selo com o logo e a forma", () => {
+    renderCard({
+      ...makeOrder("PIX"),
+      mercadoPagoOrderId: "ORD01",
+      payments: [{ id: "p1", paymentMethod: "PIX", status: "COMPLETED", amount: 9 }],
+    } as KitchenOrder);
+
+    expect(screen.getByText("Pago online · PIX")).toBeInTheDocument();
+    expect(screen.getByAltText("Mercado Pago")).toBeInTheDocument();
+  });
+
+  it("pedido online ainda pendente não mostra o selo", () => {
+    renderCard({ ...makeOrder("CREDIT_CARD"), mercadoPagoOrderId: "ORD01" } as KitchenOrder);
+
+    expect(screen.queryByText(/Pago online/)).not.toBeInTheDocument();
+  });
+});

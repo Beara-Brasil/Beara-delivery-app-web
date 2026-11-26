@@ -37,6 +37,7 @@ import {
   STATUS_TONE,
   type PaymentSummary,
 } from "@/lib/delivery";
+import { MercadoPagoIcon } from "@/components/payment/paid-online-badge";
 import type { Delivery } from "@/services/api";
 import { formatCurrency } from "@/utils";
 
@@ -125,7 +126,11 @@ function PaymentRow({ payment }: { payment: PaymentSummary | null }) {
   if (payment.isPaid) {
     return (
       <div className="flex items-center gap-2.5 rounded-xl bg-muted px-3 py-2.5">
-        <Banknote className="h-4 w-4 shrink-0 text-muted-foreground" />
+        {payment.isPaidOnline ? (
+          <MercadoPagoIcon />
+        ) : (
+          <Banknote className="h-4 w-4 shrink-0 text-muted-foreground" />
+        )}
         <p className="text-[13px] font-semibold text-muted-foreground">
           Pago online{methods && ` · ${methods}`}
         </p>

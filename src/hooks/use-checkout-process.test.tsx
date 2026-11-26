@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PRODUCT_LIMIT_MESSAGE } from "@/lib/order-quantity-limit";
+import { ONLINE_PAYMENT_OPTION } from "@/lib/online-payment";
 
 /**
  * O corpo de POST /order/:id (finalizar) é o único lugar por onde o backend
@@ -16,6 +17,8 @@ const finishOrder = vi.fn();
 const openCart = vi.fn();
 const viewOrder = vi.fn();
 const paymentsCreate = vi.fn();
+/** POST /payment/checkout do Mercado Pago (ML-01). */
+const paymentsCheckout = vi.fn();
 const deleteUserAddress = vi.fn();
 const createUserAddress = vi.fn();
 const toastError = vi.fn();
@@ -226,7 +229,7 @@ vi.mock("@/lib/geocode", async (importOriginal) => ({
 vi.mock("@/services/api", () => ({
   apiService: {
     orders: { finishOrder, openCart, viewOrder },
-    payments: { create: paymentsCreate },
+    payments: { create: paymentsCreate, checkout: paymentsCheckout },
     address: {
       deleteUserAddress,
       updateUserAddress,
@@ -1268,6 +1271,121 @@ describe("useCheckoutProcess - formas aceitas pelo restaurante (LDMF-251)", () =
   });
 });
 
+describe("useCheckoutProcess - pagar agora pelo Mercado Pago (ML-01)", () => {
+  const assign = vi.fn();
+  const originalLocation = window.location;
+
+  beforeEach(() => {
+    openingHoursQuery = { data: undefined, isLoading: false };
+    finishOrder.mockReset();
+    finishOrder.mockResolvedValue({ success: true, data: { id: "order-1" } });
+    openCart.mockReset();
+    paymentsCreate.mockReset();
+    paymentsCreate.mockResolvedValue({ success: true, data: {} });
+    paymentsCheckout.mockReset();
+    toastError.mockClear();
+    ROUTER.push.mockClear();
+    cartStore.clearCart.mockClear();
+    resetAddressMocks();
+    addressesQuery = ADDRESSES_WITH_DEFAULT;
+    seedAddressBook(ADDRESSES_WITH_DEFAULT);
+    assign.mockReset();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...originalLocation, assign },
+    });
+  });
+
+  afterEach(() => {
+    RESTAURANT_QUERY.data = { id: "comp-1", deliveryFee: "0" };
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: originalLocation,
+    });
+  });
+
+  it("não oferece pagar agora quando a loja não conectou o Mercado Pago", async () => {
+    RESTAURANT_QUERY.data = { id: "comp-1", deliveryFee: "0" };
+    const { result } = renderCheckout();
+    await waitFor(() => expect(result.current.selectedAddressId).toBe("addr-1"));
+
+    expect(result.current.availablePaymentMethods).not.toContain(
+      ONLINE_PAYMENT_OPTION,
+    );
+  });
+
+  it("oferece pagar agora por último quando a loja conectou o Mercado Pago", async () => {
+    RESTAURANT_QUERY.data = {
+      id: "comp-1",
+      deliveryFee: "0",
+      acceptedPaymentMethods: ["CASH"],
+      onlinePaymentEnabled: true,
+    } as never;
+    const { result } = renderCheckout();
+    await waitFor(() => expect(result.current.selectedAddressId).toBe("addr-1"));
+
+    expect(result.current.availablePaymentMethods).toEqual([
+      "cash",
+      ONLINE_PAYMENT_OPTION,
+    ]);
+    // O padrão continua sendo dinheiro na entrega.
+    expect(result.current.paymentMethod).toBe("cash");
+
+    act(() => {
+      result.current.setOrderType("delivery");
+      result.current.setPaymentMethod(ONLINE_PAYMENT_OPTION);
+    });
+    expect(result.current.isFormValid()).toBe(true);
+  });
+
+  it("cria o checkout do pedido gravado e manda o cliente para o Mercado Pago", async () => {
+    RESTAURANT_QUERY.data = {
+      id: "comp-1",
+      deliveryFee: "0",
+      onlinePaymentEnabled: true,
+    } as never;
+    paymentsCheckout.mockResolvedValue({
+      success: true,
+      data: { checkoutUrl: "https://mp.test/checkout/1", mercadoPagoOrderId: "mp-1" },
+    });
+
+    await submitWith((h) => {
+      h.setOrderType("delivery");
+      h.setPaymentMethod(ONLINE_PAYMENT_OPTION);
+    });
+
+    await waitFor(() => expect(assign).toHaveBeenCalledWith("https://mp.test/checkout/1"));
+    expect(paymentsCheckout).toHaveBeenCalledWith("order-1");
+    // Quem cria o pagamento online é o back, no checkout.
+    expect(paymentsCreate).not.toHaveBeenCalled();
+    expect(cartStore.clearCart).toHaveBeenCalled();
+    expect(ROUTER.push).not.toHaveBeenCalled();
+  });
+
+  it("se o checkout falhar, avisa e segue o fluxo de pedido criado sem sair do app", async () => {
+    RESTAURANT_QUERY.data = {
+      id: "comp-1",
+      deliveryFee: "0",
+      onlinePaymentEnabled: true,
+    } as never;
+    paymentsCheckout.mockResolvedValue({
+      success: false,
+      message: "Mercado Pago não conectado",
+    });
+
+    await submitWith((h) => {
+      h.setOrderType("delivery");
+      h.setPaymentMethod(ONLINE_PAYMENT_OPTION);
+    });
+
+    // Segue o caminho normal de pedido criado (a rota depende do papel).
+    await waitFor(() => expect(ROUTER.push).toHaveBeenCalledTimes(1));
+    expect(toastError).toHaveBeenCalledWith("Mercado Pago não conectado");
+    expect(assign).not.toHaveBeenCalled();
+    expect(paymentsCreate).not.toHaveBeenCalled();
+  });
+});
+
 describe("useCheckoutProcess - teto de quantidade temporário (LDMF-333)", () => {
   beforeEach(() => {
     openingHoursQuery = { data: undefined, isLoading: false };
@@ -1450,29 +1568,28 @@ describe("useCheckoutProcess - primeiro pedido e CPF (LDMF-301)", () => {
     expect(withoutCpf.current.hasCpf).toBe(false);
   });
 
-  it("exige CPF no primeiro pedido quando o cliente não informou no cadastro", async () => {
+  it("CPF é opcional no primeiro pedido: em branco passa, pela metade barra (ML-01)", async () => {
     AUTH.user = { id: "user-2", name: "Cliente Sem CPF", phone: "11999999999", cpf: "" };
     const { result } = renderCheckout();
     await waitFor(() => expect(result.current.selectedAddressId).toBe("addr-1"));
 
-    // Sem CPF preenchido
-    expect(result.current.isDeliveryValid()).toBe(false);
+    // Sem CPF preenchido: vale.
+    expect(result.current.isDeliveryValid()).toBe(true);
 
-    // Tentativa de submissão direta barra com erro
-    await act(async () => {
-      await result.current.handleSubmitOrder();
-    });
-
-    expect(toastError).toHaveBeenCalledWith("Informe um CPF válido para finalizar o pedido.");
-    expect(finishOrder).not.toHaveBeenCalled();
-
-    // Com CPF inválido/incompleto
+    // Com CPF incompleto: barra, e o submit avisa sem finalizar.
     act(() => {
       result.current.handleInputChange("cpf", "12345");
     });
     expect(result.current.isDeliveryValid()).toBe(false);
+    await act(async () => {
+      await result.current.handleSubmitOrder();
+    });
+    expect(toastError).toHaveBeenCalledWith(
+      "CPF inválido. Corrija ou deixe o campo em branco.",
+    );
+    expect(finishOrder).not.toHaveBeenCalled();
 
-    // Com CPF válido (11 dígitos)
+    // Com CPF válido (11 dígitos): vale.
     act(() => {
       result.current.handleInputChange("cpf", "12345678900");
     });
@@ -1582,13 +1699,14 @@ describe("useCheckoutProcess - primeiro pedido e CPF (LDMF-301)", () => {
     expect(finishOrder).toHaveBeenCalledTimes(1);
   });
 
-  it("conta com hasCpf false continua obrigada a informar o CPF", async () => {
+  it("conta com hasCpf false finaliza sem CPF e não tenta salvar CPF (ML-01)", async () => {
     AUTH.user = {
       id: "user-2",
       name: "Cliente Sem CPF",
       phone: "11999999999",
       hasCpf: false,
     };
+    updateCpf.mockReset();
 
     const { result } = renderCheckout();
     await waitFor(() => expect(result.current.selectedAddressId).toBe("addr-1"));
@@ -1604,10 +1722,9 @@ describe("useCheckoutProcess - primeiro pedido e CPF (LDMF-301)", () => {
       await result.current.handleSubmitOrder();
     });
 
-    expect(toastError).toHaveBeenCalledWith(
-      "Informe um CPF válido para finalizar o pedido.",
-    );
-    expect(finishOrder).not.toHaveBeenCalled();
+    await waitFor(() => expect(finishOrder).toHaveBeenCalledTimes(1));
+    expect(updateCpf).not.toHaveBeenCalled();
+    expect(toastError).not.toHaveBeenCalled();
   });
 });
 

@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
+import { ONLINE_PAYMENT_OPTION } from "@/lib/online-payment";
 import { PaymentMethod } from "./index";
 
 // Intl usa espaço não separável depois de "R$"; normaliza para comparar.
@@ -44,7 +45,7 @@ async function askForChange(user: ReturnType<typeof userEvent.setup>, value: str
 }
 
 describe("PaymentMethod", () => {
-  it("oferece só pagamento na entrega", () => {
+  it("sem a lista da loja, oferece só pagamento na entrega", () => {
     render(<Checkout />);
 
     expect(screen.getByRole("button", { name: /Dinheiro/ })).toBeInTheDocument();
@@ -52,6 +53,31 @@ describe("PaymentMethod", () => {
     expect(screen.getByRole("button", { name: /Débito na maquininha/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Pix na entrega/ })).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /Dinheiro|maquininha|Pix/ })).toHaveLength(4);
+    expect(screen.queryByRole("button", { name: /Pagar agora/ })).not.toBeInTheDocument();
+  });
+
+  it("mostra pagar agora quando a loja aceita pagamento online (ML-01)", () => {
+    render(<Checkout availableMethods={["cash", ONLINE_PAYMENT_OPTION]} />);
+
+    expect(screen.getByRole("button", { name: /Pagar agora/ })).toBeInTheDocument();
+  });
+
+  it("em pagar agora, explica o Mercado Pago e não fala de entregador nem troco (ML-01)", async () => {
+    const user = userEvent.setup();
+    render(<Checkout availableMethods={["cash", ONLINE_PAYMENT_OPTION]} />);
+    await askForChange(user, "50");
+
+    await user.click(screen.getByRole("button", { name: /Pagar agora/ }));
+
+    expect(latest).toEqual({
+      paymentMethod: ONLINE_PAYMENT_OPTION,
+      needsChange: false,
+      changeAmount: "",
+    });
+    expect(screen.getByText(/você vai para o Mercado Pago/)).toBeInTheDocument();
+    expect(screen.queryByText("Pagamento no recebimento")).not.toBeInTheDocument();
+    expect(screen.queryByText(/direto ao entregador/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Precisa de troco?")).not.toBeInTheDocument();
   });
 
   it("mostra só as formas que o restaurante aceita (LDMF-251)", () => {

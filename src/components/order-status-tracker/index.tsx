@@ -13,7 +13,7 @@ import {
   StepperTrigger,
 } from "@/components/reui/stepper";
 import { Check } from "lucide-react";
-import { ORDER_STEPS, getOrderStep } from "@/lib/order-status";
+import { getOrderTimeline } from "@/lib/order-status";
 import { Socket, io } from "socket.io-client";
 
 const DELIVERY_TRACKING_URL = process.env.NEXT_PUBLIC_API_URL
@@ -93,9 +93,10 @@ export function OrderStatusTracker({ data }: Props) {
 
   if (!order) return null;
 
-  const step = getOrderStep({
+  const { steps, step } = getOrderTimeline({
     status: order.rawStatus,
     delivery: order.delivery,
+    mercadoPagoOrderId: order.mercadoPagoOrderId,
   });
 
   const showLiveMap = order.status === "delivering" && Boolean(order.delivery);
@@ -110,20 +111,20 @@ export function OrderStatusTracker({ data }: Props) {
         }}
       >
         <StepperNav>
-          {ORDER_STEPS.map((label, index) => (
+          {steps.map((label, index) => (
             <StepperItem
               key={label}
               step={index + 1}
               className="relative flex-1 flex-col items-center"
             >
-              {index < ORDER_STEPS.length - 1 && (
+              {index < steps.length - 1 && (
                 <StepperSeparator className="absolute left-1/2 top-2.5 z-0 m-0 h-px w-full bg-muted data-[state=completed]:bg-success" />
               )}
 
               <StepperTrigger className="flex flex-col items-center gap-2">
                 <StepperIndicator className="relative z-10 size-5 border-2 border-border bg-card text-transparent data-[state=active]:border-success data-[state=active]:bg-success data-[state=active]:text-white data-[state=active]:ring-4 data-[state=active]:ring-success/10 data-[state=completed]:border-success data-[state=completed]:bg-success data-[state=completed]:text-white" />
 
-                <StepperTitle className="whitespace-nowrap text-[9px] font-semibold text-muted-foreground data-[state=active]:text-foreground data-[state=completed]:text-foreground sm:text-[10px]">
+                <StepperTitle className="max-w-[72px] text-center leading-tight text-[9px] font-semibold text-muted-foreground data-[state=active]:text-foreground data-[state=completed]:text-foreground sm:text-[10px]">
                   {label}
                 </StepperTitle>
               </StepperTrigger>

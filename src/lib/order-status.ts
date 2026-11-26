@@ -12,6 +12,12 @@ export const ORDER_STEPS = [
 ] as const;
 
 /**
+ * Pedido pago online (Mercado Pago, ML-01) começa um passo antes: o pedido só
+ * é confirmado depois que o pagamento é aprovado.
+ */
+export const ONLINE_ORDER_STEPS = ["Aguardando pagamento", ...ORDER_STEPS] as const;
+
+/**
  * Pedido em andamento na cozinha. Só estes ganham linha do tempo ao vivo -
  * carrinho, abandonado, concluído e cancelado são estáticos. Status
  * desconhecido também cai fora daqui: melhor um card parado do que uma barra
@@ -57,6 +63,10 @@ const DELIVERY_DELIVERED = ["DELIVERED", "RECEIVED", "COMPLETED"];
 type OrderLike = {
   status?: string | null;
   delivery?: { status?: string | null } | null;
+  /** Só o status importa aqui; ausente em rotas que não trazem pagamentos. */
+  payments?: Array<{ status?: string | null } | null> | null;
+  /** Order do Mercado Pago: o cliente escolheu pagar online (ML-01). */
+  mercadoPagoOrderId?: string | null;
 };
 
 export function getOrderStatus(order: OrderLike) {
@@ -69,6 +79,17 @@ function getDeliveryStatus(order: OrderLike) {
 
 export function isCanceledOrder(order: OrderLike) {
   return getOrderStatus(order) === "CANCELED";
+}
+
+/**
+ * Algum pagamento do pedido foi reembolsado (pelo app, pelo cancelamento ou
+ * no painel do Mercado Pago). Junto com CANCELED, o cliente e a loja veem
+ * "Cancelado e reembolsado" em vez de só "Cancelado" (ML-01).
+ */
+export function isRefundedOrder(order: OrderLike) {
+  return (order?.payments ?? []).some(
+    (payment) => String(payment?.status ?? "").toUpperCase() === "REFUNDED",
+  );
 }
 
 export function isActiveOrder(order: OrderLike) {
@@ -94,6 +115,29 @@ export function getOrderStep(order: OrderLike) {
   return step;
 }
 
+/** O cliente escolheu "Pagar agora" (Mercado Pago). */
+export function isOnlinePaymentOrder(order: OrderLike) {
+  return (
+    Boolean(order?.mercadoPagoOrderId) ||
+    getOrderStatus(order) === "AWAITING_PAYMENT"
+  );
+}
+
+/**
+ * Linha do tempo do pedido: as etapas e em qual ele está. Pedido pago online
+ * tem "Aguardando pagamento" antes de "Confirmado"; os demais, as 4 de sempre.
+ */
+export function getOrderTimeline(order: OrderLike): {
+  steps: readonly string[];
+  step: number;
+} {
+  const step = getOrderStep(order);
+  if (!isOnlinePaymentOrder(order)) return { steps: ORDER_STEPS, step };
+
+  const awaitingPayment = getOrderStatus(order) === "AWAITING_PAYMENT";
+  return { steps: ONLINE_ORDER_STEPS, step: awaitingPayment ? 0 : step + 1 };
+}
+
 export function getOrderStatusLabel(order: OrderLike) {
   const status = getOrderStatus(order);
 
@@ -102,6 +146,10 @@ export function getOrderStatusLabel(order: OrderLike) {
 
     if (DELIVERY_IN_TRANSIT.includes(deliveryStatus)) return "A caminho";
     if (DELIVERY_DELIVERED.includes(deliveryStatus)) return "Entregue";
+  }
+
+  if (status === "CANCELED" && isRefundedOrder(order)) {
+    return "Cancelado e reembolsado";
   }
 
   return ORDER_STATUS_LABELS[status] ?? "Em andamento";
@@ -117,6 +165,7 @@ export function getOrderStatusBadgeClass(order: OrderLike) {
 
 /** Estados da tela "Acompanhe seu pedido". */
 export type OrderTrackingStatus =
+  | "awaiting_payment"
   | "confirmed"
   | "preparing"
   | "ready"
@@ -145,6 +194,8 @@ export function getOrderTrackingStatus(order: OrderLike): OrderTrackingStatus {
         : "ready";
     case "IN_PRODUCTION":
       return "preparing";
+    case "AWAITING_PAYMENT":
+      return "awaiting_payment";
     default:
       return "confirmed";
   }

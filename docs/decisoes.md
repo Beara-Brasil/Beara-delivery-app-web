@@ -52,6 +52,8 @@ Legenda da última coluna:
 | Cópia de prato nasce indisponível e abre no modal de edição | Definido no card; a pessoa revisa antes de liberar | LDMF-489 | ✅ |
 | Tema escuro desligado (`THEME_LOCKED_TO_LIGHT = true`) | O design escuro não foi revisado | — | 🔁 Os tokens já existem; falta revisar tela por tela |
 | CSP em modo "só relata" | Observar o que quebraria antes de bloquear | LDMF-426 | 🔁 Ligar `CSP_ENFORCE` depois de conferir os relatos |
+| CPF opcional no checkout (desfaz o "CPF obrigatório no primeiro pedido" da LDMF-301). Em branco finaliza; preenchido, precisa ter 11 dígitos e fica salvo na conta | Pedido do responsável; o back já não exige CPF no pedido (`assertCustomerHasCpf` comentado) | ML-01 | 🔁 Se o back voltar a exigir, voltar a obrigar aqui |
+| "Pagar agora" (Mercado Pago) só aparece quando a loja conectou a conta (`onlinePaymentEnabled` em GET /company/:id) | O POST /payment/checkout responde 404 sem conta conectada, e aí o pedido já foi criado | ML-01 | ✅ |
 
 ## Código
 

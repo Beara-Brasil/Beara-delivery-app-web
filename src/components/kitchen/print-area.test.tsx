@@ -204,6 +204,18 @@ describe("KitchenPrintArea - pagamento", () => {
     expect(caixa.queryByText(/COBRAR/)).not.toBeInTheDocument();
   });
 
+  it("pago pelo Mercado Pago imprime PAGO ONLINE e não cobra (ML-01)", () => {
+    const { caixa } = renderVias(
+      makeOrder({
+        mercadoPagoOrderId: "ORD01",
+        payments: [{ id: "p1", paymentMethod: "PIX", status: "COMPLETED", amount: 86 }],
+      }),
+    );
+
+    expect(caixa.getByText("PAGO ONLINE (MERCADO PAGO) - NÃO COBRAR")).toBeInTheDocument();
+    expect(caixa.queryByText(/COBRAR \d|COBRAR R\$/)).not.toBeInTheDocument();
+  });
+
   it("sem pagamento avisa que não foi informado", () => {
     const { caixa } = renderVias(makeOrder({ payments: [] }));
 

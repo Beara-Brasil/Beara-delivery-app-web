@@ -61,13 +61,24 @@ type CheckoutFormValues = Partial<Record<CheckoutTextField, string>>;
 const isBlank = (value: string | undefined) => !value?.trim();
 
 /**
+ * CPF opcional no checkout (ML-01): em branco é aceito; digitado pela metade,
+ * não. A validação é só de tamanho (11 dígitos), como o `isValidCpf`. O back
+ * não exige CPF para o pedido.
+ */
+export function isInvalidOptionalCpf(cpf: string | undefined): boolean {
+  if (onlyNumbers(cpf ?? "").length === 0) return false;
+  return !isValidCpf(cpf ?? "");
+}
+
+/**
  * O que falta para sair da etapa 1, campo a campo, na ordem da tela. Antes a
  * tela só sabia "válido ou não" e respondia com um toast genérico ("Preencha
  * nome, telefone e endereço"), sem dizer qual campo - quem tinha a rua
  * apagada pela busca do CEP ficava preso sem saber por quê (LDMF-350).
  *
- * As regras são as mesmas de antes: o CPF só é pedido quando a conta não tem
- * um, e o CEP tem de ter 8 dígitos. Na retirada, o endereço não entra.
+ * O CPF é opcional (ML-01): em branco passa; preenchido, tem de ser válido.
+ * Só aparece quando a conta ainda não tem um. O CEP tem de ter 8 dígitos.
+ * Na retirada, o endereço não entra.
  */
 export function getCheckoutFieldErrors({
   values,
@@ -82,7 +93,7 @@ export function getCheckoutFieldErrors({
 
   if (isBlank(values.name)) errors.name = FIELD_MESSAGES.name;
   if (isBlank(values.phone)) errors.phone = FIELD_MESSAGES.phone;
-  if (!hasCpf && !isValidCpf(values.cpf ?? "")) errors.cpf = FIELD_MESSAGES.cpf;
+  if (!hasCpf && isInvalidOptionalCpf(values.cpf)) errors.cpf = FIELD_MESSAGES.cpf;
 
   if (orderType === "pickup") return errors;
 

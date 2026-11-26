@@ -171,6 +171,8 @@ export interface KitchenOrder {
    * no `orderCreated` do socket. Ausente ou null sem troco.
    */
   changeFor?: number | string | null;
+  /** Order do Mercado Pago: com pagamento COMPLETED, o pedido foi pago online (ML-01). */
+  mercadoPagoOrderId?: string | null;
   /** Só relevante quando `fulfillmentType === "DELIVERY"`; pode ser `null` antes da entrega ser criada. */
   delivery?: KitchenDelivery | null;
 }

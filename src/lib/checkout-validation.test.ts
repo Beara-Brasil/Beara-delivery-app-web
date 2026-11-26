@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   describeMissingFields,
+  isInvalidOptionalCpf,
   getCheckoutFieldErrors,
 } from "./checkout-validation";
 
@@ -64,6 +65,14 @@ describe("getCheckoutFieldErrors", () => {
     expect(
       getCheckoutFieldErrors({ values, orderType: "delivery", hasCpf: true }),
     ).not.toHaveProperty("cpf");
+    // CPF em branco é opcional (ML-01).
+    expect(
+      getCheckoutFieldErrors({
+        values: { ...values, cpf: "" },
+        orderType: "delivery",
+        hasCpf: false,
+      }),
+    ).not.toHaveProperty("cpf");
   });
 
   it("retirada ignora o endereço, como antes", () => {
@@ -102,5 +111,21 @@ describe("describeMissingFields", () => {
     expect(
       describeMissingFields({ street: "x", number: "y", state: "z" }),
     ).toBe("Falta preencher: Rua, Número, Estado.");
+  });
+});
+
+describe("isInvalidOptionalCpf (ML-01)", () => {
+  it("em branco não é inválido", () => {
+    expect(isInvalidOptionalCpf("")).toBe(false);
+    expect(isInvalidOptionalCpf(undefined)).toBe(false);
+    expect(isInvalidOptionalCpf("   ")).toBe(false);
+  });
+
+  it("pela metade é inválido", () => {
+    expect(isInvalidOptionalCpf("123.45")).toBe(true);
+  });
+
+  it("completo e válido passa", () => {
+    expect(isInvalidOptionalCpf("123.456.789-00")).toBe(false);
   });
 });

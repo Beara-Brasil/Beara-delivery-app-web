@@ -108,6 +108,7 @@ import type {
   MercadoPagoCheckoutResponse,
   MercadoPagoOauthConnectResponse,
   MercadoPagoOauthCallbackResponse,
+  MercadoPagoOauthStatusResponse,
 } from "./api-types";
 
 /**
@@ -1757,6 +1758,14 @@ export const apiService = {
       apiRequest<MercadoPagoOauthConnectResponse>(
         "GET",
         "/payment/oauth/connect",
+        undefined,
+        true,
+      ),
+
+    oauthStatus: () =>
+      apiRequest<MercadoPagoOauthStatusResponse>(
+        "GET",
+        "/payment/oauth/status",
         undefined,
         true,
       ),

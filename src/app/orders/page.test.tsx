@@ -26,7 +26,13 @@ const ORDER_B = {
 const ORDERS = [ORDER_B];
 const RESTAURANTS = [{ id: "rB", tradeName: "Loja B", logo_url: "" }];
 
-vi.mock("next/navigation", () => ({ useRouter: () => router }));
+// Sem parâmetros de volta do Mercado Pago: o aviso de pagamento não aparece.
+const emptySearchParams = new URLSearchParams();
+vi.mock("next/navigation", () => ({
+  useRouter: () => router,
+  useSearchParams: () => emptySearchParams,
+  usePathname: () => "/orders",
+}));
 
 vi.mock("next/image", () => ({
   default: ({ alt, src }: { alt: string; src: string }) => (

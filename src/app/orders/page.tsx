@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 
 import { MainHeader } from "@/components/main-header";
+import { PaymentReturnBanner } from "@/components/orders/payment-return-banner";
+import { PayOrderButton } from "@/components/payment/pay-order-button";
 import ProtectedRoute from "@/components/protected-route";
 import { CLIENT_ROLES } from "@/utils/role-helpers";
 import { Button } from "@/components/ui/button";
@@ -39,10 +41,10 @@ import { apiService } from "@/services/api";
 import type { CustomerOrder } from "@/constants/order-management";
 import { getErrorMessage } from "@/utils";
 import {
-  ORDER_STEPS,
   getOrderStatusBadgeClass,
   getOrderStatusLabel,
-  getOrderStep,
+  getOrderStatus,
+  getOrderTimeline,
   isActiveOrder,
   isCanceledOrder,
   isInertOrder,
@@ -167,6 +169,9 @@ function OrderHistoryContent() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { orders, loading, error, refreshHistory } = useOrderHistory();
+  // Status de um pedido da lista, para o aviso de volta do Mercado Pago.
+  const findOrderStatus = (orderId: string) =>
+    orders.find((order) => getOrderId(order) === orderId)?.status ?? null;
   const { totalItems, handleAddToCart } = useCartActions();
   const [repeatingOrderId, setRepeatingOrderId] = useState<string | null>(null);
 
@@ -330,6 +335,14 @@ function OrderHistoryContent() {
             </Button>
           </div>
 
+          {/* Volta do checkout do Mercado Pago (?orderId=&payment=), ML-01. */}
+          <Suspense fallback={null}>
+            <PaymentReturnBanner
+              findOrderStatus={findOrderStatus}
+              onRefresh={refreshHistory}
+            />
+          </Suspense>
+
           {orders.length === 0 ? (
             <EmptyOrdersState onExplore={() => router.push("/")} />
           ) : (
@@ -402,7 +415,7 @@ function ActiveOrderCard({
   brand: RestaurantBrand;
   onTrack: () => void;
 }) {
-  const step = getOrderStep(order);
+  const { steps, step } = getOrderTimeline(order);
   const itemCount = getItemCount(order);
   const eta = order.delivery?.estimatedTime;
 
@@ -435,20 +448,20 @@ function ActiveOrderCard({
         className="mt-5"
       >
         <StepperNav>
-          {ORDER_STEPS.map((label, index) => (
+          {steps.map((label, index) => (
             <StepperItem
               key={label}
               step={index + 1}
               className="relative flex-1 flex-col items-center"
             >
-              {index < ORDER_STEPS.length - 1 && (
+              {index < steps.length - 1 && (
                 <StepperSeparator className="absolute left-1/2 top-2.5 z-0 m-0 h-px w-full bg-muted data-[state=completed]:bg-success" />
               )}
 
               <StepperTrigger className="flex flex-col items-center gap-2">
                 <StepperIndicator className="relative z-10 size-5 border-2 border-border bg-card text-transparent data-[state=active]:border-success data-[state=active]:bg-success data-[state=active]:text-white data-[state=active]:ring-4 data-[state=active]:ring-success/10 data-[state=completed]:border-success data-[state=completed]:bg-success data-[state=completed]:text-white" />
 
-                <StepperTitle className="whitespace-nowrap text-[9px] font-semibold text-muted-foreground sm:text-[10px] data-[state=active]:text-foreground data-[state=completed]:text-foreground">
+                <StepperTitle className="max-w-[72px] text-center leading-tight text-[9px] font-semibold text-muted-foreground sm:text-[10px] data-[state=active]:text-foreground data-[state=completed]:text-foreground">
                   {label}
                 </StepperTitle>
               </StepperTrigger>
@@ -472,14 +485,20 @@ function ActiveOrderCard({
           <span className="text-sm font-extrabold text-foreground">
             {formatCurrency(getOrderTotal(order))}
           </span>
-          <Button
-            type="button"
-            onClick={onTrack}
-            className="h-9 rounded-lg bg-brand-500 px-3 text-xs font-bold hover:bg-brand-600"
-          >
-            Acompanhar pedido
-            <ChevronRight className="ml-1 h-3.5 w-3.5" />
-          </Button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {/* Fechou o checkout sem pagar: volta para o Mercado Pago (ML-01). */}
+            {getOrderStatus(order) === "AWAITING_PAYMENT" && (
+              <PayOrderButton orderId={getOrderId(order)} className="h-9 px-3 text-xs font-bold" />
+            )}
+            <Button
+              type="button"
+              onClick={onTrack}
+              className="h-9 rounded-lg bg-brand-500 px-3 text-xs font-bold hover:bg-brand-600"
+            >
+              Acompanhar pedido
+              <ChevronRight className="ml-1 h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
       </div>
     </Card>
