@@ -449,9 +449,15 @@ describe("useCompanyProfileManagement", () => {
       expect(api.address.updateCompanyAddress).not.toHaveBeenCalled();
       expect(toast.success).toHaveBeenCalledWith("Endereço adicionado com sucesso!");
       expect(result.current.isAddressModalOpen).toBe(false);
-      // Nenhuma geocodificação escondida no salvar (só o IBGE, ao abrir).
-      const hosts = fetchMock.mock.calls.map(([url]) => new URL(String(url)).hostname);
-      expect(hosts.filter((host) => host !== "servicodados.ibge.gov.br")).toEqual([]);
+      // Nenhuma geocodificação escondida no salvar (só o IBGE, ao abrir, e o
+      // /reverse do pino marcado acima, LDMF-542).
+      const urls = fetchMock.mock.calls.map(([url]) => new URL(String(url)));
+      expect(
+        urls
+          .filter((url) => url.hostname !== "servicodados.ibge.gov.br")
+          .filter((url) => url.pathname !== "/reverse")
+          .map((url) => url.hostname),
+      ).toEqual([]);
     });
 
     it("sem pino no mapa, não salva, avisa e mantém o modal aberto", async () => {
