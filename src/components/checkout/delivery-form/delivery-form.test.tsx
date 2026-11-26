@@ -214,10 +214,10 @@ describe("DeliveryForm - CPF da conta (LDMF-362)", () => {
     expect(screen.getByText(VALIDATED)).toBeInTheDocument();
   });
 
-  it("conta sem CPF vê o campo e não vê a mensagem", () => {
+  it("conta sem CPF vê o campo, marcado como opcional (ML-01), e não vê a mensagem", () => {
     renderForm({ hasCpf: false });
 
-    expect(screen.getByLabelText("CPF")).toBeInTheDocument();
+    expect(screen.getByLabelText("CPF (opcional)")).toBeInTheDocument();
     expect(screen.queryByText(VALIDATED)).not.toBeInTheDocument();
   });
 });

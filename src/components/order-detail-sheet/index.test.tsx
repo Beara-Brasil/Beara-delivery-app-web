@@ -45,3 +45,15 @@ describe("OrderDetailSheet - troco", () => {
     expect(screen.queryByText(/de troco/)).not.toBeInTheDocument();
   });
 });
+
+describe("OrderDetailSheet - cancelado e reembolsado (ML-01)", () => {
+  it("mostra o reembolso no status do pedido cancelado", () => {
+    renderSheet({
+      ...makeOrder("PIX"),
+      status: "CANCELED",
+      payments: [{ paymentMethod: "PIX", status: "REFUNDED", amount: 9 }],
+    });
+
+    expect(screen.getByText("Cancelado e reembolsado")).toBeInTheDocument();
+  });
+});

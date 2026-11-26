@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { getCashChange } from "@/lib/delivery";
+import { getCashChange, getOrderPaymentSummary } from "@/lib/delivery";
+import { PaidOnlineBadge } from "@/components/payment/paid-online-badge";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/utils";
 import {
@@ -56,6 +57,8 @@ export function KitchenOrderCard({
   const elapsed = getElapsed(order.statusChangedAt);
   const items = order.orderedItems ?? [];
   const payment = getPaymentLabel(order);
+  // Pago antes pelo Mercado Pago: o selo deixa claro que não se cobra nada.
+  const paymentSummary = getOrderPaymentSummary(order);
   const change = getCashChange(order);
   const fulfillmentLabel = getFulfillmentLabel(order);
   const observations = order.observations?.trim();
@@ -155,10 +158,14 @@ export function KitchenOrderCard({
         )}
 
         <div className="flex flex-wrap items-center gap-2">
-          {payment && (
-            <span className="rounded-full bg-muted px-2.5 py-1 text-sm font-medium text-muted-foreground">
-              {payment}
-            </span>
+          {paymentSummary?.isPaidOnline ? (
+            <PaidOnlineBadge methods={paymentSummary.methods} />
+          ) : (
+            payment && (
+              <span className="rounded-full bg-muted px-2.5 py-1 text-sm font-medium text-muted-foreground">
+                {payment}
+              </span>
+            )
           )}
 
           <span

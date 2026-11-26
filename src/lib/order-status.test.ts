@@ -4,10 +4,12 @@ import {
   getOrderStatusBadgeClass,
   getOrderStatusLabel,
   getOrderStep,
+  getOrderTimeline,
   getOrderTrackingStatus,
   isActiveOrder,
   isCanceledOrder,
   isInertOrder,
+  isRefundedOrder,
 } from "./order-status";
 
 describe("getOrderStatus", () => {
@@ -129,9 +131,52 @@ describe("getOrderTrackingStatus", () => {
     expect(getOrderTrackingStatus({ status: "READY_FOR_PICKUP" })).toBe("ready");
   });
 
-  it("mapeia IN_PRODUCTION para preparing e o resto para confirmed", () => {
+  it("mapeia IN_PRODUCTION para preparing e ORDERED para confirmed", () => {
     expect(getOrderTrackingStatus({ status: "IN_PRODUCTION" })).toBe("preparing");
     expect(getOrderTrackingStatus({ status: "ORDERED" })).toBe("confirmed");
-    expect(getOrderTrackingStatus({ status: "AWAITING_PAYMENT" })).toBe("confirmed");
+    // Desde ML-01, aguardando pagamento é um estado próprio, não "confirmado".
+    expect(getOrderTrackingStatus({ status: "AWAITING_PAYMENT" })).toBe("awaiting_payment");
+  });
+});
+
+describe("pedido cancelado e reembolsado (ML-01)", () => {
+  it("isRefundedOrder olha os pagamentos", () => {
+    expect(isRefundedOrder({ payments: [{ status: "REFUNDED" }] })).toBe(true);
+    expect(isRefundedOrder({ payments: [{ status: "COMPLETED" }] })).toBe(false);
+    expect(isRefundedOrder({})).toBe(false);
+  });
+
+  it("cancelado com pagamento devolvido mostra o reembolso", () => {
+    expect(
+      getOrderStatusLabel({ status: "CANCELED", payments: [{ status: "REFUNDED" }] }),
+    ).toBe("Cancelado e reembolsado");
+    expect(
+      getOrderStatusLabel({ status: "CANCELED", payments: [{ status: "FAILED" }] }),
+    ).toBe("Cancelado");
+  });
+});
+
+describe("linha do tempo com pagamento online (ML-01)", () => {
+  it("pedido pago na entrega mantém as 4 etapas", () => {
+    expect(getOrderTimeline({ status: "ORDERED" })).toEqual({
+      steps: ["Confirmado", "Em preparo", "Pronto", "Entregue"],
+      step: 0,
+    });
+  });
+
+  it("aguardando pagamento fica na primeira etapa", () => {
+    const timeline = getOrderTimeline({ status: "AWAITING_PAYMENT", mercadoPagoOrderId: "ORD1" });
+    expect(timeline.steps[0]).toBe("Aguardando pagamento");
+    expect(timeline.steps).toHaveLength(5);
+    expect(timeline.step).toBe(0);
+  });
+
+  it("pago e confirmado avança para Confirmado; em preparo, para a terceira", () => {
+    expect(getOrderTimeline({ status: "ORDERED", mercadoPagoOrderId: "ORD1" }).step).toBe(1);
+    expect(getOrderTimeline({ status: "IN_PRODUCTION", mercadoPagoOrderId: "ORD1" }).step).toBe(2);
+  });
+
+  it("acompanhamento tem o estado de aguardando pagamento", () => {
+    expect(getOrderTrackingStatus({ status: "AWAITING_PAYMENT" })).toBe("awaiting_payment");
   });
 });

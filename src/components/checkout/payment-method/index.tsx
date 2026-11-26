@@ -4,7 +4,15 @@ import { Dispatch, SetStateAction } from "react";
 
 import { formatCurrency } from "@/utils";
 
-import { AlertCircle, Banknote, Check, CreditCard, Shield, Smartphone } from "lucide-react";
+import {
+  AlertCircle,
+  Banknote,
+  Check,
+  CreditCard,
+  ExternalLink,
+  Shield,
+  Smartphone,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +20,8 @@ import { Label } from "@/components/ui/label";
 
 import { cn } from "@/lib/utils";
 import { COURIER_ENABLED } from "@/features/courier/config";
+import { ONLINE_PAYMENT_OPTION } from "@/lib/online-payment";
+import { MercadoPagoIcon } from "@/components/payment/paid-online-badge";
 
 type Props = {
   setPaymentMethod: Dispatch<SetStateAction<string>>;
@@ -32,7 +42,8 @@ type PaymentOption = {
   icon: typeof Smartphone;
 };
 
-// Só pagamento na entrega: o pagamento online foi removido do checkout.
+// Na entrega, e "Pagar agora" pelo Mercado Pago quando a loja conectou a
+// conta (ML-01). Quem decide o que aparece é `availableMethods`.
 const paymentOptions: PaymentOption[] = [
   {
     value: "cash",
@@ -58,6 +69,13 @@ const paymentOptions: PaymentOption[] = [
     description: COURIER_ENABLED ? "Direto ao entregador" : "Na hora da entrega",
     icon: Smartphone,
   },
+  {
+    value: ONLINE_PAYMENT_OPTION,
+    label: "Pagar agora",
+    description: "Pix ou cartão pelo Mercado Pago",
+    // Desenhado com o logo do Mercado Pago (ver o map abaixo).
+    icon: ExternalLink,
+  },
 ];
 
 export function PaymentMethod({
@@ -70,9 +88,12 @@ export function PaymentMethod({
   needsChange,
   availableMethods,
 }: Props) {
+  // Sem `availableMethods`, mostra as opções na entrega. "Pagar agora" só
+  // aparece quando vem na lista (loja com Mercado Pago conectado).
   const visibleOptions = availableMethods
     ? paymentOptions.filter((option) => availableMethods.includes(option.value))
-    : paymentOptions;
+    : paymentOptions.filter((option) => option.value !== ONLINE_PAYMENT_OPTION);
+  const isOnline = paymentMethod === ONLINE_PAYMENT_OPTION;
   const normalizedChangeAmount = Number.parseFloat(
     changeAmount.replace(",", "."),
   );
@@ -122,7 +143,11 @@ export function PaymentMethod({
               )}
               title={option.description}
             >
-              <Icon className="h-4 w-4" />
+              {option.value === ONLINE_PAYMENT_OPTION ? (
+                <MercadoPagoIcon />
+              ) : (
+                <Icon className="h-4 w-4" />
+              )}
               {option.label}
               {isActive && <Check className="h-3.5 w-3.5" />}
             </button>
@@ -133,13 +158,15 @@ export function PaymentMethod({
       <div className="mt-3 flex items-start gap-2 rounded-lg border border-border bg-muted p-3 text-xs font-semibold text-muted-foreground">
         <Shield className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
         <p>
-          {COURIER_ENABLED
-            ? "Voce paga direto ao entregador no recebimento do pedido."
-            : "Você paga ao receber o pedido."}
+          {isOnline
+            ? "Ao finalizar o pedido, você vai para o Mercado Pago pagar com Pix ou cartão."
+            : COURIER_ENABLED
+              ? "Voce paga direto ao entregador no recebimento do pedido."
+              : "Você paga ao receber o pedido."}
         </p>
       </div>
 
-      {paymentMethod !== "cash" && (
+      {paymentMethod !== "cash" && !isOnline && (
         <div className="mt-3 rounded-lg border border-amber-100 bg-amber-50 dark:bg-amber-950/40 p-3">
           <div className="flex items-start gap-2">
             <Banknote className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />

@@ -104,4 +104,10 @@ export interface Restaurant {
    * listagem não traz. Ausente, o checkout oferece todas.
    */
   acceptedPaymentMethods?: string[];
+
+  /**
+   * A loja conectou o Mercado Pago e aceita "Pagar agora" (ML-01). Só em
+   * GET /company/:id. Ausente = sem pagamento online.
+   */
+  onlinePaymentEnabled?: boolean;
 }

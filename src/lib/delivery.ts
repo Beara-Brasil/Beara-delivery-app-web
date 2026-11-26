@@ -308,6 +308,11 @@ export type PaymentSummary = {
   paysWith: number | null;
   /** Troco a levar = `paysWith` - `amountDue`. Null quando não há troco. */
   changeDue: number | null;
+  /**
+   * Pago antes, pelo Mercado Pago ("Pagar agora", ML-01): o pedido tem Order
+   * do MP e está pago. Quem entrega ou retira não cobra nada.
+   */
+  isPaidOnline: boolean;
 };
 
 /** Centavos inteiros: 50 - 35.90 em ponto flutuante dá 14.100000000000001. */
@@ -339,6 +344,7 @@ export type PaymentSummaryOrder = {
     amount?: number | string;
   }> | null;
   changeFor?: number | string | null;
+  mercadoPagoOrderId?: string | null;
 };
 
 /**
@@ -413,6 +419,7 @@ export function getOrderPaymentSummary(
     amountDue,
     paysWith: changeDue === null ? null : paysWith,
     changeDue,
+    isPaidOnline: isPaid && Boolean(order?.mercadoPagoOrderId),
   };
 }
 

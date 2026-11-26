@@ -264,7 +264,7 @@ export function DeliveryForm({
           {!hasCpf && (
             <Field
               htmlFor="cpf"
-              label="CPF"
+              label="CPF (opcional)"
               className="md:col-span-2"
               error={fieldErrors.cpf}
             >
@@ -285,7 +285,7 @@ export function DeliveryForm({
                 />
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5">
-                Informe seu CPF para concluir o pedido.
+                Opcional. Se informar, ele fica salvo na sua conta.
               </p>
             </Field>
           )}

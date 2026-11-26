@@ -3,6 +3,7 @@ import { apiService, type Address, type Delivery, type Order } from "@/services/
 import {
   getOrderTrackingStatus,
   isCanceledOrder,
+  isRefundedOrder,
   type OrderTrackingStatus,
 } from "@/lib/order-status";
 import type { SoundName } from "@/lib/sound";
@@ -58,7 +59,11 @@ export interface OrderInfo {
   };
   delivery?: RawDelivery | null;
   rawStatus: string;
+  /** Order do Mercado Pago, quando o cliente pagou (ou vai pagar) online. */
+  mercadoPagoOrderId: string | null;
   isCanceled: boolean;
+  /** Cancelado com o pagamento devolvido (ML-01). */
+  isRefunded: boolean;
 }
 
 /**
@@ -134,14 +139,16 @@ async function fetchOrderData(
     fullAddress = delivery.deliveryAddress;
   }
 
-  const trackedOrder = { status: order.status, delivery };
+  const trackedOrder = { status: order.status, delivery, payments: order.payments };
 
   return {
     id: order.id,
     orderNumber: String(order.orderNumber ?? ""),
     status: getOrderTrackingStatus(trackedOrder),
     rawStatus: String(order.status ?? ""),
+    mercadoPagoOrderId: order.mercadoPagoOrderId ?? null,
     isCanceled: isCanceledOrder(trackedOrder),
+    isRefunded: isRefundedOrder(trackedOrder),
     estimatedTime:
       delivery?.estimatedDeliveryTime || delivery?.estimatedTime || "30-40 min",
     total: order.totalValue || order.total || 0,
@@ -260,6 +267,8 @@ export const useOrderStatus = () => {
 
   const getStatusMessage = (status: OrderStatus): string => {
     const messages = {
+      awaiting_payment:
+        "Aguardando a confirmação do pagamento pelo Mercado Pago. Assim que for aprovado, o pedido vai para a loja.",
       confirmed: "Pedido confirmado! Estamos preparando com carinho.",
       preparing: "Seu pedido está sendo preparado na cozinha.",
       ready: "Pedido pronto! Saindo para entrega.",

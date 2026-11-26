@@ -192,7 +192,9 @@ function PaymentBlock({ order, isPickup }: { order: KitchenOrder; isPickup: bool
   return (
     <>
       <p>Forma: {summary.methods.join(" + ")}</p>
-      {summary.isPaid ? (
+      {summary.isPaidOnline ? (
+        <p className="font-bold">PAGO ONLINE (MERCADO PAGO) - NÃO COBRAR</p>
+      ) : summary.isPaid ? (
         <p className="font-bold">PAGO</p>
       ) : (
         <p className="font-bold">

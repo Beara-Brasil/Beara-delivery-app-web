@@ -22,7 +22,9 @@ import {
   getVariationLabel,
   mergeIdenticalItems,
 } from "@/constants/order-management";
-import { getCashChange } from "@/lib/delivery";
+import { getCashChange, getOrderPaymentSummary } from "@/lib/delivery";
+import { isRefundedOrder } from "@/lib/order-status";
+import { PaidOnlineBadge } from "@/components/payment/paid-online-badge";
 import {
   Clock,
   CreditCard,
@@ -87,6 +89,8 @@ export interface DetailableOrder {
     status?: string;
     amount?: number | string;
   }> | null;
+  /** Order do Mercado Pago: com pagamento concluído, foi pago online (ML-01). */
+  mercadoPagoOrderId?: string | null;
   /** Troco para quanto (valor que o cliente entrega em dinheiro); ver `getCashChange`. */
   changeFor?: number | string | null;
   delivery?: {
@@ -139,8 +143,14 @@ export function OrderDetailSheet<TOrder extends DetailableOrder>({
   const customerName = order.customer?.name || "Cliente";
   const customerPhone = order.customer?.phone;
   const payment = order.payments?.[0];
+  const paymentSummary = getOrderPaymentSummary(order);
   const change = getCashChange(order);
-  const statusInfo = STATUS_LABELS[order.status] || { label: order.status, variant: "outline" as const };
+  const baseStatusInfo = STATUS_LABELS[order.status] || { label: order.status, variant: "outline" as const };
+  // Cancelado com o pagamento devolvido (ML-01).
+  const statusInfo =
+    order.status === "CANCELED" && isRefundedOrder({ payments: order.payments })
+      ? { ...baseStatusInfo, label: "Cancelado e reembolsado" }
+      : baseStatusInfo;
   const isCanceled = order.status === "CANCELED";
   const isCompleted = order.status === "COMPLETED";
   const isDone = isCanceled || isCompleted;
@@ -380,9 +390,13 @@ export function OrderDetailSheet<TOrder extends DetailableOrder>({
                 <span>Total</span>
                 <span>{formatCurrency(order.totalValue || 0)}</span>
               </div>
-              <div className="flex justify-between text-xs text-muted-foreground pt-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
                 <span>Forma de pagamento</span>
-                <span>{getPaymentMethodLabel(payment?.paymentMethod)}</span>
+                {paymentSummary?.isPaidOnline ? (
+                  <PaidOnlineBadge methods={paymentSummary.methods} className="text-xs" />
+                ) : (
+                  <span>{getPaymentMethodLabel(payment?.paymentMethod)}</span>
+                )}
               </div>
               {change && !isCanceled && (
                 <div className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">

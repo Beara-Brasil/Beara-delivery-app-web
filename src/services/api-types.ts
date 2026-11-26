@@ -466,6 +466,12 @@ export interface Company {
    * não na listagem. Opcional: ausente, o checkout oferece todas.
    */
   acceptedPaymentMethods?: PaymentMethod[];
+  /**
+   * A loja conectou o Mercado Pago e aceita pagamento online pelo
+   * POST /payment/checkout (ML-01). Só vem em GET /company/:id. Ausente
+   * (back antigo) = sem pagamento online.
+   */
+  onlinePaymentEnabled?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -672,6 +678,11 @@ export interface Order {
    * dinheiro ou o cliente dispensou o troco.
    */
   changeFor?: number;
+  /**
+   * Order do Mercado Pago (ML-01). Preenchido quando o cliente escolheu
+   * "Pagar agora"; junto com um pagamento COMPLETED, o pedido foi pago online.
+   */
+  mercadoPagoOrderId?: string | null;
   /** Observação geral do pedido, enviada em POST /order (ver order.md). */
   observations?: string | null;
 }
@@ -850,6 +861,20 @@ export interface MercadoPagoOauthConnectResponse {
 
 export interface MercadoPagoOauthCallbackResponse {
   connected: boolean;
+}
+
+/**
+ * GET /payment/oauth/status (LDMF-516). Nunca traz token.
+ * - connected: a empresa tem conta e o token ainda vale
+ * - expired: tem conta, mas o token venceu (precisa reconectar)
+ * Sem conta, os demais campos vêm null.
+ */
+export interface MercadoPagoOauthStatusResponse {
+  connected: boolean;
+  expired: boolean;
+  mercadoPagoId: string | null;
+  expiresAt: string | null;
+  connectedAt: string | null;
 }
 
 // ======================

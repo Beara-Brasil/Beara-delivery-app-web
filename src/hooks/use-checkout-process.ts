@@ -51,8 +51,10 @@ import {
 } from "./use-opening-hours";
 import { resolveRestaurantOpenStatus } from "@/constants/opening-hours";
 import { resolveAcceptedPaymentMethods } from "@/lib/accepted-payment-methods";
+import { ONLINE_PAYMENT_OPTION } from "@/lib/online-payment";
 import {
   getCheckoutFieldErrors,
+  isInvalidOptionalCpf,
   type CheckoutFieldErrors,
 } from "@/lib/checkout-validation";
 import { getCartLimitError } from "@/lib/order-quantity-limit";
@@ -76,20 +78,34 @@ export const CHECKOUT_PAYMENT_METHODS: Record<string, PaymentMethod> = {
   pix_on_delivery: PaymentMethod.PIX,
 };
 
+/** Opção que o checkout sabe processar (na entrega ou online). */
+function isCheckoutPaymentOption(option: string): boolean {
+  return (
+    option === ONLINE_PAYMENT_OPTION ||
+    Object.hasOwn(CHECKOUT_PAYMENT_METHODS, option)
+  );
+}
+
 /**
  * Opções do checkout que o restaurante aceita, na ordem de
  * CHECKOUT_PAYMENT_METHODS. Sem `acceptedPaymentMethods` na resposta (ou
- * enquanto ela não chega), todas as opções ficam disponíveis (LDMF-251).
+ * enquanto ela não chega), todas as opções na entrega ficam disponíveis
+ * (LDMF-251). O pagamento online entra por último, só quando a loja conectou
+ * o Mercado Pago (`onlinePaymentEnabled`, ML-01).
  */
 export function getAvailableCheckoutPaymentMethods(
   acceptedPaymentMethods: unknown,
+  onlinePaymentEnabled = false,
 ): string[] {
   const accepted: PaymentMethod[] = resolveAcceptedPaymentMethods(
     acceptedPaymentMethods,
   );
-  return Object.keys(CHECKOUT_PAYMENT_METHODS).filter((option) =>
+  const onDelivery = Object.keys(CHECKOUT_PAYMENT_METHODS).filter((option) =>
     accepted.includes(CHECKOUT_PAYMENT_METHODS[option]),
   );
+  return onlinePaymentEnabled
+    ? [...onDelivery, ONLINE_PAYMENT_OPTION]
+    : onDelivery;
 }
 
 /**
@@ -302,7 +318,8 @@ export const useCheckoutProcess = () => {
     null,
   );
 
-  // Pagamento online foi removido: todo pedido é pago na entrega.
+  // Padrão é dinheiro na entrega. O pagamento online (Mercado Pago) só
+  // aparece quando a loja conectou a conta (ML-01).
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [changeAmount, setChangeAmount] = useState(""); // Troco para dinheiro
   const [needsChange, setNeedsChange] = useState(false);
@@ -316,13 +333,14 @@ export const useCheckoutProcess = () => {
   // entre renders, já que a lista é recriada a cada um.
   const availablePaymentMethods = getAvailableCheckoutPaymentMethods(
     restaurantDetails?.acceptedPaymentMethods,
+    restaurantDetails?.onlinePaymentEnabled === true,
   );
   const availablePaymentMethodsKey = availablePaymentMethods.join(",");
   useEffect(() => {
     const available = availablePaymentMethodsKey.split(",");
     // Valor fora das opções do checkout não é trocado aqui: o isFormValid
     // já barra, e trocar esconderia o erro.
-    if (!Object.hasOwn(CHECKOUT_PAYMENT_METHODS, paymentMethod)) return;
+    if (!isCheckoutPaymentOption(paymentMethod)) return;
     if (available.includes(paymentMethod)) return;
 
     setPaymentMethod(available[0]);
@@ -552,10 +570,10 @@ export const useCheckoutProcess = () => {
 
     const requiredFields = isDeliveryValid();
 
-    // Só pagamento na entrega é aceito
-    // e só forma que o restaurante aceita.
+    // Só forma que o restaurante aceita (na entrega, ou online se a loja
+    // conectou o Mercado Pago).
     const paymentValid =
-      Object.hasOwn(CHECKOUT_PAYMENT_METHODS, paymentMethod) &&
+      isCheckoutPaymentOption(paymentMethod) &&
       availablePaymentMethods.includes(paymentMethod);
 
     // Se é dinheiro e precisa de troco, validar valor. `>=` e não `>`:
@@ -629,9 +647,10 @@ export const useCheckoutProcess = () => {
       return;
     }
 
+    // CPF opcional (ML-01): só barra quando foi digitado e é inválido.
     const hasCpf = userHasCpf(user);
-    if (!hasCpf && !isValidCpf(deliveryInfo.cpf)) {
-      showCheckoutError("Informe um CPF válido para finalizar o pedido.");
+    if (!hasCpf && isInvalidOptionalCpf(deliveryInfo.cpf)) {
+      showCheckoutError("CPF inválido. Corrija ou deixe o campo em branco.");
       return;
     }
 
@@ -672,7 +691,7 @@ export const useCheckoutProcess = () => {
 
     try {
       // --------------------------------------------------
-      // 0️⃣ SALVAR CPF CASO SEJA PRIMEIRO PEDIDO SEM CPF (LDMF-301)
+      // 0️⃣ SALVAR CPF SE O CLIENTE INFORMOU (LDMF-301; opcional desde ML-01)
       // --------------------------------------------------
       if (!hasCpf && isValidCpf(deliveryInfo.cpf)) {
         const cleanCpf = onlyNumbers(deliveryInfo.cpf);
@@ -904,6 +923,30 @@ export const useCheckoutProcess = () => {
       // app (o clique de "finalizar pedido"). Delivery é pulado quando é
       // retirada no local.
 
+      /**
+       * Pagar agora (ML-01): o POST /payment/checkout cria o pagamento no
+       * back e devolve a URL do Mercado Pago. Devolve null se falhar - o
+       * pedido já existe, então segue para "Meus pedidos" com o aviso.
+       */
+      const createOnlineCheckout = async (): Promise<string | null> => {
+        if (!finalOrderId) return null;
+
+        const failMessage =
+          "Pedido criado, mas não foi possível abrir o pagamento online. Confira em Meus pedidos.";
+
+        try {
+          const response = await apiService.payments.checkout(finalOrderId);
+          if (response.success && response.data?.checkoutUrl) {
+            return response.data.checkoutUrl;
+          }
+          showCheckoutError(response.message || failMessage);
+        } catch (error) {
+          console.error("Erro no checkout do Mercado Pago:", error);
+          showCheckoutError(failMessage);
+        }
+        return null;
+      };
+
       const createPayment = async () => {
         if (!finalOrderId) return;
 
@@ -940,7 +983,13 @@ export const useCheckoutProcess = () => {
       // finalizar o pedido, a partir do fulfillmentType. O POST /delivery
       // que existia aqui é proibido pra role client, então falhava sempre e
       // disparava um toast de erro em todo pedido de entrega.
-      await createPayment();
+      const isOnlinePayment = paymentMethod === ONLINE_PAYMENT_OPTION;
+      let onlineCheckoutUrl: string | null = null;
+      if (isOnlinePayment) {
+        onlineCheckoutUrl = await createOnlineCheckout();
+      } else {
+        await createPayment();
+      }
 
       // O endereço continua sendo criado antes de finalizar - um pedido de
       // entrega precisa de um endereço do cliente gravado no backend. Mas se
@@ -960,6 +1009,19 @@ export const useCheckoutProcess = () => {
         } catch (error) {
           console.error("Erro ao descartar endereço temporário:", error);
         }
+      }
+
+      // Pagar agora: sai do app para o Mercado Pago. O pedido já está gravado
+      // e o carrinho é limpo antes, porque a página é trocada inteira. A volta
+      // é configurada no back (MP_CHECKOUT_*_URL) e o status do pagamento chega
+      // pelo webhook.
+      if (onlineCheckoutUrl) {
+        orderCompleted = true;
+        setIsNavigating(true);
+        clearCart();
+        toast.success("Pedido criado! Abrindo o Mercado Pago para o pagamento.");
+        window.location.assign(onlineCheckoutUrl);
+        return;
       }
 
       // O motivo da marca por inteiro, terminando aberto: pico de alívio do

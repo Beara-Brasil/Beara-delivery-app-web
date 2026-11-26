@@ -4,6 +4,7 @@ import {
   getCashChange,
   getChangeablePayment,
   getPaymentSummary,
+  getOrderPaymentSummary,
   isSameMoney,
 } from "@/lib/delivery";
 import {
@@ -106,6 +107,24 @@ describe("getPaymentSummary", () => {
     );
 
     expect(summary).toMatchObject({ isPaid: true, amountDue: 0 });
+  });
+
+  it("pago pelo Mercado Pago é isPaidOnline; pago na entrega não (ML-01)", () => {
+    const paidOnline = getOrderPaymentSummary({
+      mercadoPagoOrderId: "ORD01",
+      payments: [makePayment({ status: PaymentStatus.COMPLETED })],
+    });
+    const pendingOnline = getOrderPaymentSummary({
+      mercadoPagoOrderId: "ORD01",
+      payments: [makePayment()],
+    });
+    const paidOnDelivery = getOrderPaymentSummary({
+      payments: [makePayment({ status: PaymentStatus.COMPLETED })],
+    });
+
+    expect(paidOnline?.isPaidOnline).toBe(true);
+    expect(pendingOnline?.isPaidOnline).toBe(false);
+    expect(paidOnDelivery).toMatchObject({ isPaid: true, isPaidOnline: false });
   });
 
   it("pedido pago não anuncia troco, mesmo com changeFor preenchido", () => {

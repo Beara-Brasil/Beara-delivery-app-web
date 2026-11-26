@@ -4,6 +4,7 @@ import { formatCurrency, formatPhoneDisplay } from "@/utils";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { OrderStatusTracker } from "../order-status-tracker";
+import { PayOrderButton } from "@/components/payment/pay-order-button";
 
 type Props = {
   data: {
@@ -79,15 +80,21 @@ export function OrderStatus({ data }: Props) {
             {order.isCanceled ? (
               <div className="mt-4 rounded-[10px] bg-red-50 dark:bg-red-950/40 px-[13px] py-[11px]">
                 <p className="text-[12.5px] font-bold text-red-700 dark:text-red-400">
-                  Pedido cancelado
+                  {order.isRefunded ? "Pedido cancelado e reembolsado" : "Pedido cancelado"}
                 </p>
                 <p className="mt-[5px] text-[11.5px] font-semibold text-red-600 dark:text-red-400">
-                  Este pedido foi cancelado e não será preparado.
+                  {order.isRefunded
+                    ? "Este pedido foi cancelado e o valor pago foi devolvido para a mesma forma de pagamento."
+                    : "Este pedido foi cancelado e não será preparado."}
                 </p>
               </div>
             ) : (
               <div className="mt-4">
                 <OrderStatusTracker data={data} />
+                {/* Fechou o checkout sem pagar: volta para o Mercado Pago (ML-01). */}
+                {order.rawStatus === "AWAITING_PAYMENT" && (
+                  <PayOrderButton orderId={order.id} size="default" className="mt-3 w-full sm:w-auto" />
+                )}
               </div>
             )}
           </section>

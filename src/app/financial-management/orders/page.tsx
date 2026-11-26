@@ -11,6 +11,7 @@ import { useAuthStore } from "@/stores"
 import { useQuery } from "@tanstack/react-query"
 import { ClipboardList } from "lucide-react"
 import { useMemo, useState } from "react"
+import { isRefundedOrder } from "@/lib/order-status"
 
 const STATUS_LABELS: Record<string, string> = {
   CART: "Carrinho",
@@ -21,6 +22,17 @@ const STATUS_LABELS: Record<string, string> = {
   COMPLETED: "Concluído",
   CANCELED: "Cancelado",
   ABANDONED: "Abandonado",
+}
+
+/** Rótulo do status; cancelado com pagamento devolvido ganha o reembolso (ML-01). */
+function getStatusText(order: {
+  status: string
+  payments?: Array<{ status?: string | null } | null> | null
+}) {
+  if (order.status === "CANCELED" && isRefundedOrder({ payments: order.payments })) {
+    return "Cancelado e reembolsado"
+  }
+  return STATUS_LABELS[order.status] ?? order.status
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -178,7 +190,7 @@ export default function OrdersPage() {
                         <Badge
                           className={`shrink-0 text-xs ${STATUS_COLORS[order.status] ?? "bg-muted text-foreground"}`}
                         >
-                          {STATUS_LABELS[order.status] ?? order.status}
+                          {getStatusText(order)}
                         </Badge>
                       </div>
                       <div className="mt-2 flex items-center justify-between">
@@ -247,7 +259,7 @@ export default function OrdersPage() {
                             <Badge
                               className={`text-xs ${STATUS_COLORS[order.status] ?? "bg-muted text-foreground"}`}
                             >
-                              {STATUS_LABELS[order.status] ?? order.status}
+                              {getStatusText(order)}
                             </Badge>
                           </td>
                         </tr>

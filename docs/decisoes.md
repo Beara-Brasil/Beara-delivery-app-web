@@ -55,6 +55,8 @@ Legenda da última coluna:
 | CSP em modo "só relata" | Observar o que quebraria antes de bloquear | LDMF-426 | 🔁 Ligar `CSP_ENFORCE` depois de conferir os relatos |
 | Landing e cadastro de restaurantes com identidade própria (fontes Bricolage, Instrument Sans e JetBrains Mono; laranja `#F26B1D`), escopada em `.bd` pelo `BearaDeliveryShell` (`src/components/beara-delivery/`) | É a família da marca Beara (o site institucional usa as mesmas fontes e símbolo, em azul e ciano). Só essas duas telas usam por enquanto; trocar o `brand-500` do app inteiro é decisão separada | LDMF-538 | 🔁 Rever quando decidirem levar a identidade para o resto do app |
 | Landing de restaurantes sem números de vitrine, tempo de entrega nem promoções | "500+ restaurantes", "50k pedidos", "4.8★", "entrega em 30 min" e "repasse em 48h" não tinham fonte. O tempo de entrega está escondido no app (LDMF-534), não há promoção ativa e a entrega é do próprio restaurante | LDMF-538 | ✅ Só volte a citar quando existir de verdade; os textos ficam em `content.ts` |
+| CPF opcional no checkout (desfaz o "CPF obrigatório no primeiro pedido" da LDMF-301). Em branco finaliza; preenchido, precisa ter 11 dígitos e fica salvo na conta | Pedido do responsável; o back já não exige CPF no pedido (`assertCustomerHasCpf` comentado) | ML-01 | 🔁 Se o back voltar a exigir, voltar a obrigar aqui |
+| "Pagar agora" (Mercado Pago) só aparece quando a loja conectou a conta (`onlinePaymentEnabled` em GET /company/:id) | O POST /payment/checkout responde 404 sem conta conectada, e aí o pedido já foi criado | ML-01 | ✅ |
 
 ## Código
 

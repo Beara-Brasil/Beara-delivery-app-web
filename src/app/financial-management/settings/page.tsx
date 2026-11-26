@@ -1,7 +1,6 @@
 "use client";
 
 import { AdminPageLayout } from "@/components/admin-page-layout";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -15,14 +14,12 @@ import type {
   CashMovementOperation,
   OperationMethodOverride,
 } from "@/stores/financial-preferences-store";
-import { apiService, PaymentMethod } from "@/services/api";
+import { PaymentMethod } from "@/services/api";
 import {
   Check,
   ChevronDown,
   ChevronUp,
   CreditCard,
-  ExternalLink,
-  Loader2,
   Monitor,
   RotateCcw,
   Settings,
@@ -32,7 +29,7 @@ import {
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { isManagementRole } from "@/utils/role-helpers";
-import { getErrorMessage } from "@/utils";
+import { MercadoPagoConnection } from "./mercado-pago-connection";
 
 /**
  * Só os métodos que o backend aceita num movimento de caixa. BANK_TRANSFER
@@ -122,25 +119,6 @@ export default function SettingsPage() {
 
   const user = useAuthStore((state) => state.user);
   const isManagement = isManagementRole(user?.role);
-  const [isConnectingMp, setIsConnectingMp] = useState(false);
-
-  const handleConnectMercadoPago = async () => {
-    setIsConnectingMp(true);
-    try {
-      const response = await apiService.payments.oauthConnect();
-      if (response.success && response.data?.authorizationUrl) {
-        window.location.href = response.data.authorizationUrl;
-      } else {
-        toast.error(response.message || "Erro ao conectar com Mercado Pago");
-      }
-    } catch (err) {
-      toast.error(
-        getErrorMessage(err, "Erro ao iniciar conexão com Mercado Pago"),
-      );
-    } finally {
-      setIsConnectingMp(false);
-    }
-  };
 
   // A customização por operação começa recolhida. Recolher é só visual: não
   // mexe no estado. Pra não esconder override ativo, o cabeçalho mostra quantas
@@ -363,31 +341,7 @@ export default function SettingsPage() {
               </h2>
             </div>
             <div className="p-4 sm:p-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="max-w-md">
-                  <div className="text-[13px] font-semibold text-foreground">
-                    Conectar Conta Mercado Pago
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground text-pretty">
-                    Conecte a conta Mercado Pago do restaurante para processar
-                    pagamentos de pedidos com checkout online, atualização de
-                    status via webhook e movimentação automática de caixa.
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  onClick={handleConnectMercadoPago}
-                  disabled={isConnectingMp}
-                  className="shrink-0 gap-2 rounded-lg"
-                >
-                  {isConnectingMp ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <ExternalLink className="h-4 w-4" />
-                  )}
-                  {isConnectingMp ? "Conectando..." : "Conectar Mercado Pago"}
-                </Button>
-              </div>
+              <MercadoPagoConnection />
             </div>
           </section>
         )}
