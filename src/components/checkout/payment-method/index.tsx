@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { cn } from "@/lib/utils";
+import { COURIER_ENABLED } from "@/features/courier/config";
 
 type Props = {
   setPaymentMethod: Dispatch<SetStateAction<string>>;
@@ -54,7 +55,7 @@ const paymentOptions: PaymentOption[] = [
   {
     value: "pix_on_delivery",
     label: "Pix na entrega",
-    description: "Direto ao entregador",
+    description: COURIER_ENABLED ? "Direto ao entregador" : "Na hora da entrega",
     icon: Smartphone,
   },
 ];
@@ -131,7 +132,11 @@ export function PaymentMethod({
 
       <div className="mt-3 flex items-start gap-2 rounded-lg border border-border bg-muted p-3 text-xs font-semibold text-muted-foreground">
         <Shield className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-        <p>Voce paga direto ao entregador no recebimento do pedido.</p>
+        <p>
+          {COURIER_ENABLED
+            ? "Voce paga direto ao entregador no recebimento do pedido."
+            : "Você paga ao receber o pedido."}
+        </p>
       </div>
 
       {paymentMethod !== "cash" && (
@@ -143,7 +148,9 @@ export function PaymentMethod({
                 Pagamento no recebimento
               </p>
               <p className="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-400">
-                Combine o pagamento com o entregador no momento da entrega.
+                {COURIER_ENABLED
+                  ? "Combine o pagamento com o entregador no momento da entrega."
+                  : "Combine o pagamento com o restaurante no momento da entrega."}
               </p>
             </div>
           </div>
