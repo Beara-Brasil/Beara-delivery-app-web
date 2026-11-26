@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import RestaurantLandingPage from "./page";
 
 // next/font só funciona no build do Next; no teste basta a classe da variável.
-vi.mock("./fonts", () => ({
+vi.mock("@/components/beara-delivery/fonts", () => ({
   displayFont: { variable: "font-display-var" },
   sansFont: { variable: "font-sans-var" },
   monoFont: { variable: "font-mono-var" },

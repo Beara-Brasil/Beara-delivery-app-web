@@ -18,9 +18,9 @@ const COLUMNS = [
 ] as const;
 
 const TONE_CLASSES = {
-  new: { box: "bg-(--lb-new-bg) border-(--lb-new-line)", line: "border-(--lb-new-line)", text: "text-(--lb-new-text)" },
-  prep: { box: "bg-(--lb-prep-bg) border-(--lb-prep-line)", line: "border-(--lb-prep-line)", text: "text-(--lb-prep-text)" },
-  ready: { box: "bg-(--lb-ready-bg) border-(--lb-ready-line)", line: "border-(--lb-ready-line)", text: "text-(--lb-ready-text)" },
+  new: { box: "bg-(--bd-new-bg) border-(--bd-new-line)", line: "border-(--bd-new-line)", text: "text-(--bd-new-text)" },
+  prep: { box: "bg-(--bd-prep-bg) border-(--bd-prep-line)", line: "border-(--bd-prep-line)", text: "text-(--bd-prep-text)" },
+  ready: { box: "bg-(--bd-ready-bg) border-(--bd-ready-line)", line: "border-(--bd-ready-line)", text: "text-(--bd-ready-text)" },
 } as const;
 
 const AFTER_ADVANCE = [BILI_MESSAGES.preparing, BILI_MESSAGES.ready, BILI_MESSAGES.completed];
@@ -41,8 +41,8 @@ export function OrderBoardDemo() {
     <div className="relative flex justify-center pt-[clamp(130px,15vw,175px)]">
       <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center">
         <div className="relative h-[clamp(130px,15vw,175px)] w-full max-w-[560px]">
-          <div className="absolute top-[clamp(8px,2vw,24px)] left-0 flex max-w-[58%] flex-col gap-0.5 rounded-[18px_18px_4px_18px] bg-(--lb-surface) px-4 py-3 text-(--lb-ink) shadow-[0_12px_24px_-12px_var(--lb-shadow)]">
-            <span className="lb-mono text-xs text-(--lb-accent)">BILI · mascote Beara Delivery</span>
+          <div className="absolute top-[clamp(8px,2vw,24px)] left-0 flex max-w-[58%] flex-col gap-0.5 rounded-[18px_18px_4px_18px] bg-(--bd-surface) px-4 py-3 text-(--bd-ink) shadow-[0_12px_24px_-12px_var(--bd-shadow)]">
+            <span className="bd-mono text-xs text-(--bd-accent)">BILI · mascote Beara Delivery</span>
             <strong className="text-[15px] leading-[1.3]" aria-live="polite">
               {message}
             </strong>
@@ -59,10 +59,10 @@ export function OrderBoardDemo() {
         </div>
       </div>
 
-      <div className="relative z-[1] flex w-full max-w-[560px] flex-col gap-3 rounded-[22px] bg-(--lb-surface) p-3.5 text-(--lb-ink) shadow-[0_40px_80px_-30px_var(--lb-shadow)] lg:[transform:perspective(1400px)_rotateY(-6deg)_rotateX(3deg)]">
+      <div className="relative z-[1] flex w-full max-w-[560px] flex-col gap-3 rounded-[22px] bg-(--bd-surface) p-3.5 text-(--bd-ink) shadow-[0_40px_80px_-30px_var(--bd-shadow)] lg:[transform:perspective(1400px)_rotateY(-6deg)_rotateX(3deg)]">
         <div className="flex items-center justify-between px-1 py-0.5">
-          <strong className="lb-display text-lg">Painel de pedidos</strong>
-          <span className="flex items-center gap-1.5 text-xs font-semibold text-(--lb-accent)">
+          <strong className="bd-display text-lg">Painel de pedidos</strong>
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-(--bd-accent)">
             <span className="size-2 rounded-full bg-[#22C55E]" aria-hidden />
             Loja aberta
           </span>
@@ -89,7 +89,7 @@ export function OrderBoardDemo() {
               >
                 <div className={`flex items-center justify-between border-b px-3 py-2.5 ${toneClasses.line}`}>
                   <strong className={`text-[13px] ${toneClasses.text}`}>{config.label}</strong>
-                  <span className="rounded-md bg-(--lb-surface) px-2 py-0.5 text-xs font-semibold">
+                  <span className="rounded-md bg-(--bd-surface) px-2 py-0.5 text-xs font-semibold">
                     {orders.length}
                   </span>
                 </div>
@@ -97,25 +97,25 @@ export function OrderBoardDemo() {
                   {orders.map(({ order, index }) => (
                     <article
                       key={order.id}
-                      className="flex flex-col rounded-[10px] border border-(--lb-line) bg-(--lb-surface) shadow-[0_4px_10px_-6px_rgba(90,35,5,.25)]"
+                      className="flex flex-col rounded-[10px] border border-(--bd-line) bg-(--bd-surface) shadow-[0_4px_10px_-6px_rgba(90,35,5,.25)]"
                     >
-                      <div className="flex items-center justify-between gap-2 border-b border-(--lb-line) px-2.5 py-2">
+                      <div className="flex items-center justify-between gap-2 border-b border-(--bd-line) px-2.5 py-2">
                         <strong className="text-[13px]">{order.id}</strong>
-                        <span className="text-xs whitespace-nowrap text-(--lb-faint)">{order.minutes} min</span>
+                        <span className="text-xs whitespace-nowrap text-(--bd-faint)">{order.minutes} min</span>
                       </div>
                       <div className="flex flex-col gap-1.5 px-2.5 py-2">
                         <div className="flex min-w-0 items-center gap-2">
                           <span
-                            className="flex size-[26px] shrink-0 items-center justify-center rounded-[7px] bg-(--lb-chip) text-xs font-bold text-(--lb-accent)"
+                            className="flex size-[26px] shrink-0 items-center justify-center rounded-[7px] bg-(--bd-chip) text-xs font-bold text-(--bd-accent)"
                             aria-hidden
                           >
                             {order.customer[0]}
                           </span>
                           <span className="truncate text-xs font-semibold">{order.customer}</span>
                         </div>
-                        <span className="text-xs leading-[1.35] text-(--lb-ink-soft)">{order.items}</span>
-                        <div className="flex flex-wrap items-baseline justify-between gap-x-1.5 border-t border-(--lb-line) pt-1.5">
-                          <span className="text-xs text-(--lb-faint)">{order.payment}</span>
+                        <span className="text-xs leading-[1.35] text-(--bd-ink-soft)">{order.items}</span>
+                        <div className="flex flex-wrap items-baseline justify-between gap-x-1.5 border-t border-(--bd-line) pt-1.5">
+                          <span className="text-xs text-(--bd-faint)">{order.payment}</span>
                           <strong className="text-[13px] whitespace-nowrap">{formatCurrency(order.total)}</strong>
                         </div>
                       </div>
@@ -124,7 +124,7 @@ export function OrderBoardDemo() {
                           <button
                             type="button"
                             onClick={() => advance(index)}
-                            className="min-h-9 w-full cursor-pointer rounded-lg bg-linear-to-r from-(--lb-action-from) to-(--lb-action-to) px-1.5 py-2 text-xs font-semibold text-white"
+                            className="min-h-9 w-full cursor-pointer rounded-lg bg-linear-to-r from-(--bd-action-from) to-(--bd-action-to) px-1.5 py-2 text-xs font-semibold text-white"
                           >
                             {config.actionLabel}
                           </button>
@@ -133,7 +133,7 @@ export function OrderBoardDemo() {
                     </article>
                   ))}
                   {orders.length === 0 && (
-                    <p className="flex min-h-[110px] flex-1 items-center justify-center text-center text-xs text-(--lb-faint)">
+                    <p className="flex min-h-[110px] flex-1 items-center justify-center text-center text-xs text-(--bd-faint)">
                       {config.emptyMessage}
                     </p>
                   )}

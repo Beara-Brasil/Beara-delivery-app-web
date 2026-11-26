@@ -11,12 +11,12 @@ export function FaqList() {
     <div className="flex flex-col gap-2.5">
       {FAQ.map((item, index) => {
         const open = openIndex === index;
-        const answerId = `lb-faq-${index}`;
+        const answerId = `bd-faq-${index}`;
 
         return (
           <div
             key={item.question}
-            className="overflow-hidden rounded-2xl border border-(--lb-line) bg-(--lb-surface)"
+            className="overflow-hidden rounded-2xl border border-(--bd-line) bg-(--bd-surface)"
           >
             <h3>
               <button
@@ -28,7 +28,7 @@ export function FaqList() {
               >
                 <span className="min-w-0 flex-1">{item.question}</span>
                 <span
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-(--lb-bg) text-lg text-(--lb-accent)"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-(--bd-bg) text-lg text-(--bd-accent)"
                   aria-hidden
                 >
                   {open ? "−" : "+"}
@@ -38,7 +38,7 @@ export function FaqList() {
             <p
               id={answerId}
               hidden={!open}
-              className="px-[22px] pb-[22px] text-base leading-[1.55] text-(--lb-muted)"
+              className="px-[22px] pb-[22px] text-base leading-[1.55] text-(--bd-muted)"
             >
               {item.answer}
             </p>

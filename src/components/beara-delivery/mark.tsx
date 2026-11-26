@@ -12,7 +12,7 @@ export function BearaDeliveryMark({
   // marca d'água do hero: some para leitor de tela
   decorative?: boolean;
 }) {
-  const clipId = `lb-mark-${useId().replace(/:/g, "")}`;
+  const clipId = `bd-mark-${useId().replace(/:/g, "")}`;
 
   return (
     <svg
@@ -44,7 +44,7 @@ export function BearaDeliveryMark({
 
 export function BearaDeliveryWordmark({ accentClassName }: { accentClassName: string }) {
   return (
-    <span className="lb-display whitespace-nowrap text-lg font-extrabold sm:text-[22px] tracking-[.01em]">
+    <span className="bd-display whitespace-nowrap text-lg font-extrabold sm:text-[22px] tracking-[.01em]">
       BEARA <span className={`font-semibold ${accentClassName}`}>Delivery</span>
     </span>
   );
