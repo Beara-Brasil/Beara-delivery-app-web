@@ -61,3 +61,6 @@ Legenda da última coluna:
 | `@/utils` (barrel) configura o dayjs ao ser importado (pt-BR, utc, plugins) | Quem usa `dayjs` conta com isso | ⚠️ Não troque os imports de `@/utils` por caminhos diretos sem garantir que o dayjs continue configurado |
 | Existem 4 `formatCurrency` diferentes | Comportamento diferente para valor inválido: uns mostram "R$ 0,00", outro "R$ NaN" | ⚠️ Unificar muda o que aparece na tela; precisa de card e teste |
 | `"use client"` na maioria dos arquivos | O app é client-side (Zustand, TanStack Query, socket) | ✅ |
+| Mapa do endereço com câmera travada por etapa (Brasil → estado → cidade) e livre só dentro da cidade com 1,5 km de folga; sem botões + e − | Pedido do produto: o mapa acompanha os campos, sem o cliente se perder. Detalhes em [mapa-do-endereco.md](./mapa-do-endereco.md) (LDMF-542) | 🔁 Os botões estão só ocultos (`zoomControl`) |
+| Contorno de estado e cidade do mapa vem da malha do IBGE, não do Nominatim | No Nominatim o retângulo do ES ia até Trindade (1.000 km mar adentro), e o de PE e RN também pega ilhas (LDMF-542) | ✅ |
+| O pino preenche os campos, mudando só o que mudou; o Número nunca muda | Pedido do produto; o mapa erra o número da casa. Os campos entram sem limpar os seguintes nem mover o pino (LDMF-542) | ✅ Ver `decidePinFill` e `fillFromPin` |
