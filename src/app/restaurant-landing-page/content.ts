@@ -59,6 +59,11 @@ export const FAQ = [
       "Sim. Por enquanto, a entrega é feita pelo próprio restaurante. Em breve, o Beara Entregas vai ajudar nessa parte.",
   },
   {
+    question: "Quanto custa para participar?",
+    answer:
+      "Não tem taxa de adesão: você cadastra a loja sem pagar nada. Para receber pagamentos online, conecte a conta Mercado Pago do restaurante no painel.",
+  },
+  {
     question: "Em quanto tempo minha loja fica no ar?",
     answer:
       "Na hora. O cadastro é imediato: monte o cardápio e o horário de funcionamento e sua loja já aparece para os clientes da região.",
