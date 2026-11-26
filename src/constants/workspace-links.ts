@@ -6,6 +6,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { COURIER_ENABLED } from "@/features/courier/config";
+
 /**
  * Areas de trabalho do menu, por role.
  *
@@ -77,6 +79,9 @@ export const WORKSPACE_LINKS_BY_ROLE: Record<string, WorkspaceLink[]> = {
  */
 export function getWorkspaceLinks(role?: string): WorkspaceLink[] {
   if (!role) return [];
+  // Área do entregador desligada (LDMF-539): sem item no menu. Lido a cada
+  // chamada, e não no mapa, para a chave valer sem recarregar o módulo.
+  if (role === "delivery" && !COURIER_ENABLED) return [];
   return WORKSPACE_LINKS_BY_ROLE[role] ?? [];
 }
 

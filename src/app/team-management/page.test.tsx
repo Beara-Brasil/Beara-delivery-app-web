@@ -109,6 +109,25 @@ describe("TeamManagementPage - Exibição e Ações de Remover Membro", () => {
     mockHookState.isRemoving = false;
   });
 
+  it("não oferece Entregador no convite enquanto a área está desligada (LDMF-539)", () => {
+    mockHookState.isModalOpen = true;
+    try {
+      render(<TeamManagementPage />);
+      const funcao = screen.getByLabelText(/Função/) as HTMLSelectElement;
+      const opcoes = Array.from(funcao.options).map((option) => option.textContent);
+      expect(opcoes).toEqual(["Gerente", "Cozinheiro", "Financeiro"]);
+    } finally {
+      mockHookState.isModalOpen = false;
+    }
+  });
+
+  it("quem já é entregador continua aparecendo na equipe", () => {
+    mockHookState.staff = [makeStaff("u-del", "Diego Entregador", "diego@entrega.com", "delivery")];
+    mockHookState.allStaff = mockHookState.staff;
+    render(<TeamManagementPage />);
+    expect(screen.getByText("Diego Entregador")).toBeInTheDocument();
+  });
+
   it("exibe cabeçalho Ações e botões de remoção quando logado como owner", () => {
     render(<TeamManagementPage />);
 

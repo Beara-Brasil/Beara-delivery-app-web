@@ -1,4 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+// Chave da área do entregador (LDMF-539): os testes de sempre rodam com ela
+// ligada; os de "desligada" trocam o valor e voltam no afterEach.
+const courier = vi.hoisted(() => ({ enabled: true }));
+vi.mock("@/features/courier/config", () => ({
+  get COURIER_ENABLED() {
+    return courier.enabled;
+  },
+}));
+
+afterEach(() => {
+  courier.enabled = true;
+});
 import {
   getPrimaryWorkspaceLink,
   getWorkspaceLinks,
@@ -27,6 +40,13 @@ describe("getWorkspaceLinks", () => {
     expect(labels("cook")).toEqual(["Cozinha"]);
     expect(labels("delivery")).toEqual(["Entregas"]);
     expect(labels("financial")).toEqual(["Financeiro"]);
+  });
+
+  it("com a area do entregador desligada, o entregador fica sem Entregas", () => {
+    courier.enabled = false;
+    expect(labels("delivery")).toEqual([]);
+    expect(getPrimaryWorkspaceLink("delivery")).toBeNull();
+    expect(labels("cook")).toEqual(["Cozinha"]);
   });
 
   it("role sem area de trabalho nao mostra a secao", () => {

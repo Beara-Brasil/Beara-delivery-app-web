@@ -1,4 +1,7 @@
+import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+
+import { COURIER_ENABLED } from "@/features/courier/config";
 
 import { DeliveryTabBar } from "@/features/courier/components/delivery-tab-bar";
 import ProtectedRoute from "@/components/protected-route";
@@ -34,6 +37,9 @@ export default function DeliveryAreaLayout({
 }: {
   children: ReactNode;
 }) {
+  // Área desligada (LDMF-539): a rota responde 404 para todo mundo.
+  if (!COURIER_ENABLED) notFound();
+
   return (
     <ProtectedRoute allowedRoles={DELIVERY_ROLES}>
       <div className="min-h-screen bg-muted pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))]">
