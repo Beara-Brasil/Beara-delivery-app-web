@@ -435,6 +435,7 @@ export default function AuthModal({
                 </div>
                 <p className="text-muted-foreground">Enviamos um código de verificação para</p>
                 <p className="font-semibold text-foreground break-all">{otpData.email}</p>
+                <p className="text-xs text-muted-foreground mt-2">O código vale por 5 minutos.</p>
               </div>
 
               <div className="space-y-2">
