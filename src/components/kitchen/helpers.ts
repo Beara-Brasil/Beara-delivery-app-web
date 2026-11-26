@@ -1,3 +1,5 @@
+import { COURIER_ENABLED } from "@/features/courier/config";
+
 import {
   DELIVERY_STATUS_LABELS,
   PAYMENT_METHOD_LABELS,
@@ -206,6 +208,9 @@ export function getPaymentLabel(order: KitchenOrder): string | null {
  */
 export function getFulfillmentLabel(order: KitchenOrder): string {
   if (order.fulfillmentType === "PICKUP") return "Retirada no local";
+  // Sem entregador (LDMF-539) a entrega fica PENDING para sempre: o selo não
+  // pode dizer "aguardando entregador".
+  if (!COURIER_ENABLED) return "Entrega";
 
   const deliveryStatus = order.delivery?.status;
   if (deliveryStatus) {
@@ -217,6 +222,7 @@ export function getFulfillmentLabel(order: KitchenOrder): string {
 /** Tom informativo, sem semântica de erro — nem para retirada, nem para entrega. */
 export function getFulfillmentToneClass(order: KitchenOrder): string {
   if (order.fulfillmentType === "PICKUP") return "bg-violet-100 dark:bg-violet-900 text-violet-800 dark:text-violet-300";
+  if (!COURIER_ENABLED) return "bg-slate-100 text-slate-600";
 
   switch (order.delivery?.status) {
     case "PICKED_UP":
