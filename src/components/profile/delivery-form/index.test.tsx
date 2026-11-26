@@ -671,3 +671,49 @@ describe("DeliveryForm: ordem e trava dos campos", () => {
     });
   });
 });
+
+describe("DeliveryForm: nova experiência (LDMF-540)", () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: false, json: async () => [] })),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("'Não sei meu CEP' leva para o Estado, sem buscar nada", () => {
+    const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>;
+    renderForm();
+    const chamadasAntes = fetchMock.mock.calls.length;
+    // jsdom não implementa scrollIntoView
+    const scroll = vi.fn();
+    Element.prototype.scrollIntoView = scroll;
+
+    fireEvent.click(screen.getByRole("button", { name: "Não sei meu CEP" }));
+
+    expect(document.activeElement).toBe(field(/Estado/));
+    expect(scroll).toHaveBeenCalled();
+    expect(fetchMock.mock.calls.length).toBe(chamadasAntes);
+  });
+
+  it("o Voltar do cabeçalho fecha o modal", () => {
+    const fechar = vi.fn();
+    renderForm({ handleCloseAddressModal: fechar } as Extra);
+
+    fireEvent.click(screen.getByRole("button", { name: "Voltar" }));
+
+    expect(fechar).toHaveBeenCalled();
+  });
+
+  it("o mapa continua embaixo dos campos", () => {
+    renderForm();
+    const numero = field(/Número/);
+    const mapa = screen.getByText("Localização no mapa");
+    expect(
+      numero.compareDocumentPosition(mapa) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+});
