@@ -33,8 +33,14 @@ Card: LDMF-542.
   cidade para na borda.
 - **Os botões + e − estão ocultos** (`zoomControl={false}` em
   `leaflet-address-map.tsx`). Para voltar, é só trocar para `true`.
-- **A roda do mouse continua sem zoom**, de propósito: o formulário rola, e a
-  rolagem não pode virar zoom quando o cursor passa pelo mapa.
+- **A roda do mouse dá zoom só na etapa livre.** Nas travadas ela continua
+  rolando o formulário, para a rolagem não parar no mapa. No PC, sem os botões,
+  é o jeito de aproximar e afastar.
+- **Mapa com 320 px de altura e zoom fracionado** (`zoomSnap={0.25}`): o
+  enquadramento fica justo no Brasil, no estado e na cidade. Medido com o
+  Brasil no mapa de 500 px de largura (PC): com 220 px e zoom inteiro, o Brasil
+  ocupava 12% do mapa e aparecia a África; com 320 px e zoom fracionado, 46%.
+  No celular (343 px), 68%.
 
 ### De onde vêm os contornos
 

@@ -240,8 +240,12 @@ export default function LeafletAddressMap({
       <MapContainer
         center={[initial.lat, initial.lng]}
         zoom={value ? (zoom ?? PINNED_ZOOM) : FALLBACK_ZOOM}
-        // Rolagem da página não deve virar zoom no mapa (o formulário rola).
+        // A roda começa desligada; o `CameraController` liga na etapa livre.
         scrollWheelZoom={false}
+        // Zoom fracionado: o enquadramento das etapas fica justo no Brasil,
+        // no estado e na cidade, em vez de arredondar para o nível inteiro
+        // de baixo (com 1, o Brasil ocupava 12% do mapa no PC).
+        zoomSnap={0.25}
         // Botões + e − ocultos (LDMF-542): a câmera segue as etapas e, na
         // livre, o zoom é por gesto. Para voltar, troque para `true`.
         zoomControl={false}

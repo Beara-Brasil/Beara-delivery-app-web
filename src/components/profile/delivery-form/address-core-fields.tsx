@@ -669,7 +669,7 @@ export function AddressCoreFields({
           </div>
         )}
         <AddressMap
-          mapHeight={220}
+          mapHeight={320}
           value={addressCoords?.coords ?? null}
           onSelect={(coords) => applyCoords(coords, "manual")}
           zoom={pinZoom}
