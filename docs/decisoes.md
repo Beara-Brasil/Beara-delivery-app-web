@@ -52,7 +52,6 @@ Legenda da última coluna:
 | Cópia de prato nasce indisponível e abre no modal de edição | Definido no card; a pessoa revisa antes de liberar | LDMF-489 | ✅ |
 | Tema escuro desligado (`THEME_LOCKED_TO_LIGHT = true`) | O design escuro não foi revisado | — | 🔁 Os tokens já existem; falta revisar tela por tela |
 | CSP em modo "só relata" | Observar o que quebraria antes de bloquear | LDMF-426 | 🔁 Ligar `CSP_ENFORCE` depois de conferir os relatos |
-| Teclado do celular: `interactiveWidget: "resizes-content"` no `viewport` e `DialogContent` que se ajusta ao `visualViewport` (`useKeyboardViewport`) | Com a página mantendo o tamanho (padrão do Chrome no Android e do Safari no iPhone), os campos de baixo das janelas centralizadas ficavam atrás do teclado sem ter como subir. O iPhone ignora a primeira; a segunda cobre os dois | LDMF-541 | ✅ Janela nova com campo: use o `DialogContent`, não uma janela fixa própria |
 
 ## Código
 
@@ -62,3 +61,4 @@ Legenda da última coluna:
 | `@/utils` (barrel) configura o dayjs ao ser importado (pt-BR, utc, plugins) | Quem usa `dayjs` conta com isso | ⚠️ Não troque os imports de `@/utils` por caminhos diretos sem garantir que o dayjs continue configurado |
 | Existem 4 `formatCurrency` diferentes | Comportamento diferente para valor inválido: uns mostram "R$ 0,00", outro "R$ NaN" | ⚠️ Unificar muda o que aparece na tela; precisa de card e teste |
 | `"use client"` na maioria dos arquivos | O app é client-side (Zustand, TanStack Query, socket) | ✅ |
+| Teclado do celular: `interactiveWidget: "resizes-content"` no `viewport` e `DialogContent` que se ajusta ao `visualViewport` (`useKeyboardViewport`) | Com a página mantendo o tamanho (padrão do Chrome no Android e do Safari no iPhone), os campos de baixo das janelas centralizadas ficavam atrás do teclado sem ter como subir. O iPhone ignora a primeira; a segunda cobre os dois (LDMF-541) | ✅ Janela nova com campo: use o `DialogContent`, não uma janela fixa própria |
