@@ -1,7 +1,7 @@
 "use client";
 
 import { formatCep } from "@/utils";
-import { LocateFixed, Search } from "lucide-react";
+import { ChevronDown, LocateFixed, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { AddressForm } from "@/components/profile/addresses";
@@ -23,7 +23,7 @@ import {
   STREET_TYPES,
   type StreetType,
 } from "@/lib/street-type";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 /** Bairro da lista: `value` é o nome oficial, `label` o texto exibido. */
 export type NeighborhoodOption = { value: string; label: string };
@@ -99,8 +99,32 @@ export type AddressCoreFieldsProps = AddressFieldProps &
 /** Valor da opção "Outro" na lista (nunca é salvo). */
 const OTHER_NEIGHBORHOOD = "__outro__";
 
-const selectClass =
-  "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
+// Visual dos campos (LDMF-540): mais altos, fundo claro e foco laranja. Os
+// inputs recebem a mesma base pelo className, por cima do padrão do Input.
+const fieldClass =
+  "h-12 rounded-xl border-border bg-muted/60 px-3.5 text-base shadow-none transition-colors md:text-base focus-visible:border-brand-500 focus-visible:bg-background focus-visible:ring-[3px] focus-visible:ring-brand-500/20 disabled:cursor-not-allowed disabled:opacity-70";
+
+// O pr-9 vem depois: o px-3.5 do fieldClass apagaria o espaço da seta.
+const selectClass = cn(
+  "flex w-full appearance-none border py-1 text-foreground focus-visible:outline-none cursor-pointer",
+  fieldClass,
+  "pr-9 truncate",
+);
+
+const labelClass = "text-[13.5px] font-semibold text-foreground/80";
+
+/** Seletor nativo com a seta própria (o `appearance-none` tira a do sistema). */
+function SelectBox({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative">
+      {children}
+      <ChevronDown
+        className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground"
+        aria-hidden
+      />
+    </div>
+  );
+}
 
 /** Lista de opções que sempre inclui o valor atual (carregando ou legado). */
 function withCurrent(options: string[], current: string) {
@@ -246,20 +270,36 @@ export function AddressCoreFields({
     });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-x-3 gap-y-5 md:grid-cols-2">
       {/* CEP */}
       <div className="md:col-span-2 space-y-2">
-        <label htmlFor="address-zipcode" className="text-sm font-medium">
-          CEP{zipCodeRequired ? " *" : ""}
-        </label>
+        <div className="flex items-baseline justify-between gap-3">
+          <label htmlFor="address-zipcode" className={labelClass}>
+            CEP{zipCodeRequired ? " *" : ""}
+          </label>
+          {/* Sem busca nos Correios: o caminho sem CEP é preencher estado,
+              cidade e rua, e o mapa acha o lugar (LDMF-540). */}
+          <button
+            type="button"
+            onClick={() => {
+              const state = document.getElementById("address-state");
+              state?.scrollIntoView({ block: "center", behavior: "smooth" });
+              state?.focus({ preventScroll: true });
+            }}
+            className="cursor-pointer text-[13px] font-semibold text-brand-600 hover:underline dark:text-brand-400"
+          >
+            Não sei meu CEP
+          </button>
+        </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             id="address-zipcode"
             {...addressForm.register("zipCode")}
             placeholder="00000-000"
             maxLength={9}
-            className="pl-10"
+            inputMode="numeric"
+            className={cn(fieldClass, "pl-10 font-semibold")}
             onChange={(e) => {
               const formatted = formatCep(e.target.value);
               addressForm.setValue("zipCode", formatted, {
@@ -299,18 +339,21 @@ export function AddressCoreFields({
         )}
       </div>
 
+      {/* Estado e Cidade lado a lado, também no celular (LDMF-540). */}
+      <div className="md:col-span-2 grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3">
       {/* Estado */}
-      <div className="space-y-2">
-        <label htmlFor="address-state" className="text-sm font-medium">
+      <div className="min-w-0 space-y-2">
+        <label htmlFor="address-state" className={labelClass}>
           Estado *
         </label>
+        <SelectBox>
         <select
           id="address-state"
           value={currentState ?? ""}
           onChange={(e) => onStateChange(e.target.value)}
           className={selectClass}
         >
-          <option value="">Selecione o estado</option>
+          <option value="">Selecione</option>
           {currentState &&
             !stateOptions.some((option) => option.uf === currentState) && (
               <option value={currentState}>{currentState}</option>
@@ -321,14 +364,15 @@ export function AddressCoreFields({
             </option>
           ))}
         </select>
+        </SelectBox>
         {errors.state && (
           <p className="text-sm text-destructive">{errors.state.message}</p>
         )}
       </div>
 
       {/* Cidade */}
-      <div className="space-y-2">
-        <label htmlFor="address-city" className="text-sm font-medium">
+      <div className="min-w-0 space-y-2">
+        <label htmlFor="address-city" className={labelClass}>
           Cidade *
         </label>
         {citiesError ? (
@@ -339,8 +383,10 @@ export function AddressCoreFields({
             onChange={(e) => onCityChange(e.target.value)}
             placeholder="Nome da cidade"
             disabled={fieldLocks.city}
+            className={fieldClass}
           />
         ) : (
+          <SelectBox>
           <select
             id="address-city"
             value={currentCity ?? ""}
@@ -357,15 +403,17 @@ export function AddressCoreFields({
               </option>
             ))}
           </select>
+          </SelectBox>
         )}
         {errors.city && (
           <p className="text-sm text-destructive">{errors.city.message}</p>
         )}
       </div>
+      </div>
 
       {/* Bairro */}
       <div className="md:col-span-2 space-y-2">
-        <label htmlFor="address-neighborhood" className="text-sm font-medium">
+        <label htmlFor="address-neighborhood" className={labelClass}>
           Bairro *
         </label>
         {/* Carregando vale também com uma lista na tela: ela é da cidade
@@ -373,10 +421,13 @@ export function AddressCoreFields({
         {!currentCity?.trim() ? (
           // Sem cidade ainda: lista travada que diz o que falta, em vez de
           // um campo que parece aceitar o bairro digitado.
+          <SelectBox>
           <select id="address-neighborhood" disabled className={selectClass}>
             <option value="">Escolha a cidade primeiro</option>
           </select>
+          </SelectBox>
         ) : isLoadingNeighborhoods ? (
+          <SelectBox>
           <select
             id="address-neighborhood"
             disabled
@@ -385,8 +436,10 @@ export function AddressCoreFields({
           >
             <option value="">Carregando bairros...</option>
           </select>
+          </SelectBox>
         ) : neighborhoodOptions ? (
           <>
+            <SelectBox>
             <select
               id="address-neighborhood"
               value={
@@ -412,13 +465,14 @@ export function AddressCoreFields({
               ))}
               <option value={OTHER_NEIGHBORHOOD}>Outro</option>
             </select>
+            </SelectBox>
             {/* "Outro" (bairro fora da lista, ou endereço antigo com um
                 nome que não está nela): o nome é salvo como foi escrito. */}
             {isOtherNeighborhood && (
               <div className="space-y-2 pt-1">
                 <label
                   htmlFor="address-neighborhood-other"
-                  className="text-sm font-medium"
+                  className={labelClass}
                 >
                   Qual é o seu bairro? *
                 </label>
@@ -428,6 +482,7 @@ export function AddressCoreFields({
                   onChange={(e) => onOtherNeighborhoodChange?.(e.target.value)}
                   placeholder="Nome do bairro"
                   required
+                  className={fieldClass}
                 />
               </div>
             )}
@@ -439,6 +494,7 @@ export function AddressCoreFields({
             onChange={(e) => onNeighborhoodChange(e.target.value)}
             placeholder="Nome do bairro"
             disabled={fieldLocks.neighborhood}
+            className={fieldClass}
           />
         )}
         {errors.neighborhood && (
@@ -449,11 +505,12 @@ export function AddressCoreFields({
       </div>
 
       {/* Rua: tipo de logradouro + nome (LDMF-282) */}
-      <div className="md:col-span-2 grid grid-cols-[7rem_1fr] gap-2 sm:grid-cols-[8.5rem_1fr]">
+      <div className="md:col-span-2 grid grid-cols-[7rem_minmax(0,1fr)] gap-3 sm:grid-cols-[8.5rem_minmax(0,1fr)]">
         <div className="space-y-2">
-          <label htmlFor="address-street-type" className="text-sm font-medium">
+          <label htmlFor="address-street-type" className={labelClass}>
             Tipo
           </label>
+          <SelectBox>
           <select
             id="address-street-type"
             className={selectClass}
@@ -473,9 +530,10 @@ export function AddressCoreFields({
               </option>
             ))}
           </select>
+          </SelectBox>
         </div>
         <div className="space-y-2">
-          <label htmlFor="address-street" className="text-sm font-medium">
+          <label htmlFor="address-street" className={labelClass}>
             Nome da rua *
           </label>
           <input type="hidden" {...addressForm.register("street")} />
@@ -490,6 +548,7 @@ export function AddressCoreFields({
             }}
             placeholder="Ex.: Sete de Setembro"
             disabled={fieldLocks.street}
+            className={fieldClass}
             aria-invalid={errors.street ? true : undefined}
           />
         </div>
@@ -544,73 +603,83 @@ export function AddressCoreFields({
         )}
       </div>
 
-      {/* Número */}
-      <div className="space-y-2">
-        <label htmlFor="address-number" className="text-sm font-medium">
-          Número *
-        </label>
-        <Input
-          id="address-number"
-          {...addressForm.register("number")}
-          placeholder="123"
-          disabled={fieldLocks.number || noNumber}
-        />
-        <div className="flex items-center space-x-2">
+      {/* Número e Complemento lado a lado (LDMF-540). Com os opcionais
+          recolhidos (checkout), o Número fica sozinho e o botão abre o resto. */}
+      <div className="md:col-span-2 space-y-1">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="min-w-0 space-y-2">
+            <label htmlFor="address-number" className={labelClass}>
+              Número *
+            </label>
+            <Input
+              id="address-number"
+              {...addressForm.register("number")}
+              placeholder="123"
+              inputMode="numeric"
+              disabled={fieldLocks.number || noNumber}
+              className={cn(
+                fieldClass,
+                // S/N aparece como um campo vazado, não como um campo quebrado.
+                noNumber && "border-dashed font-semibold disabled:opacity-100 text-muted-foreground",
+              )}
+            />
+          </div>
+          {showComplement && showOptionalFields && (
+            <div className="min-w-0 space-y-2">
+              <label htmlFor="address-complement" className={labelClass}>
+                Complemento
+              </label>
+              <Input
+                id="address-complement"
+                {...addressForm.register("complement")}
+                placeholder="Apto, bloco, etc"
+                disabled={fieldLocks.rest}
+                className={fieldClass}
+              />
+            </div>
+          )}
+        </div>
+        <label
+          htmlFor="address-no-number"
+          className="inline-flex min-h-11 cursor-pointer items-center gap-2.5 text-[14.5px] font-medium"
+        >
           <input
             type="checkbox"
             id="address-no-number"
             checked={noNumber}
             onChange={(e) => setNoNumber(e.target.checked)}
             disabled={fieldLocks.number}
-            className="h-4 w-4 rounded border-border text-brand-500 focus:ring-brand-500"
+            className="size-5 cursor-pointer rounded-md accent-brand-500"
           />
-          <label htmlFor="address-no-number" className="text-sm cursor-pointer">
-            Sem número
-          </label>
-        </div>
+          Sem número
+        </label>
         {errors.number && (
           <p className="text-sm text-destructive">{errors.number.message}</p>
         )}
       </div>
 
-      {!hasOptionalFields ? null : showOptionalFields ? (
-        <>
-        {/* Complemento (o seletor da home não guarda: não mostra) */}
-        {showComplement && (
-          <div className="space-y-2">
-            <label htmlFor="address-complement" className="text-sm font-medium">
-              Complemento
-            </label>
-            <Input
-              id="address-complement"
-              {...addressForm.register("complement")}
-              placeholder="Apto, bloco, etc"
-              disabled={fieldLocks.rest}
-            />
-          </div>
-        )}
+      {/* Referência (loja, cliente no perfil e checkout) */}
+      {showReference && showOptionalFields && (
+        <div className="md:col-span-2 space-y-2">
+          <label htmlFor="address-reference" className={labelClass}>
+            Referência
+          </label>
+          <Input
+            id="address-reference"
+            {...addressForm.register("reference")}
+            placeholder="Ponto de referência (opcional)"
+            disabled={fieldLocks.rest}
+            className={fieldClass}
+          />
+        </div>
+      )}
 
-        {/* Referência (loja, cliente no perfil e checkout) */}
-        {showReference && (
-          <div className="md:col-span-2 space-y-2">
-            <label htmlFor="address-reference" className="text-sm font-medium">
-              Referência
-            </label>
-            <Input
-              id="address-reference"
-              {...addressForm.register("reference")}
-              placeholder="Ponto de referência (opcional)"
-              disabled={fieldLocks.rest}
-            />
-          </div>
-        )}
-        </>
-      ) : (
+      {hasOptionalFields && !showOptionalFields && (
         <div className="md:col-span-2">
           <button
             type="button"
             onClick={() => setOptionalFieldsOpen(true)}
-            className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-400"
+            className="min-h-11 cursor-pointer text-sm font-semibold text-brand-600 hover:underline dark:text-brand-400"
           >
             + {showComplement && showReference
               ? "Complemento e ponto de referência"
@@ -625,7 +694,7 @@ export function AddressCoreFields({
       {/* Localização no mapa */}
       <div className="md:col-span-2 space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <label className="text-sm font-medium">Localização no mapa</label>
+          <label className={labelClass}>Localização no mapa</label>
           {(isSearchingAddress || isLocatingPin) && (
             <span role="status" className="text-xs text-muted-foreground">
               {isSearchingAddress ? "Buscando endereço..." : "Localizando..."}
@@ -684,7 +753,7 @@ export function AddressCoreFields({
 
       {/* Checkbox Padrão */}
       {showDefaultOption && (
-        <div className="md:col-span-2 flex flex-wrap items-center gap-x-2 pt-2">
+        <div className="md:col-span-2 flex min-h-11 flex-wrap items-center gap-x-2.5 pt-1">
           <input
             type="checkbox"
             id="isDefault"
@@ -693,7 +762,7 @@ export function AddressCoreFields({
             aria-describedby={
               defaultOptionLockedHint ? "isDefault-locked-hint" : undefined
             }
-            className="h-4 w-4 rounded border-border text-brand-500 focus:ring-brand-500 disabled:opacity-60"
+            className="size-5 cursor-pointer rounded-md accent-brand-500 disabled:cursor-default disabled:opacity-60"
           />
           <label
             htmlFor="isDefault"
