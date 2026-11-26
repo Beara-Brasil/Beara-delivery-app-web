@@ -16,6 +16,7 @@ import { Coords } from "@/types/restaurant";
  */
 
 const SEARCH_URL = "https://nominatim.openstreetmap.org/search";
+const REVERSE_URL = "https://nominatim.openstreetmap.org/reverse";
 const MIN_INTERVAL_MS = 1000;
 
 
@@ -53,6 +54,49 @@ export type StreetMatch = {
    */
   withoutChosenType: boolean;
 };
+
+/**
+ * Endereço de uma coordenada (LDMF-542): o que o pino diz sobre estado,
+ * cidade, bairro e rua. Campo que o OpenStreetMap não conhece vem `null`.
+ * Número nunca vem: ele não muda pelo pino.
+ */
+export type ReverseAddress = {
+  /** UF, ex.: "ES". */
+  state: string | null;
+  city: string | null;
+  neighborhood: string | null;
+  street: string | null;
+};
+
+/** UF a partir do ISO ("BR-ES") ou do nome do estado. */
+function ufFrom(address: NominatimAddress): string | null {
+  const iso = address["ISO3166-2-lvl4"]?.toUpperCase();
+  if (iso?.startsWith("BR-")) return iso.slice(3);
+
+  const name = normalizeText(address.state);
+  const match = Object.entries(BRAZIL_STATES).find(
+    ([, stateName]) => normalizeText(stateName) === name,
+  );
+  return match?.[0] ?? null;
+}
+
+export function parseReverseAddress(
+  address: NominatimAddress | undefined,
+): ReverseAddress | null {
+  if (!address) return null;
+  const clean = (value?: string) => value?.trim() || null;
+
+  return {
+    state: ufFrom(address),
+    city: clean(
+      address.city ?? address.town ?? address.village ?? address.municipality,
+    ),
+    neighborhood: clean(
+      address.suburb ?? address.neighbourhood ?? address.quarter,
+    ),
+    street: clean(address.road),
+  };
+}
 
 /** Máximo de chamadas por busca de rua (todas passam pela fila). */
 export const MAX_STREET_ATTEMPTS = 4;
@@ -195,7 +239,37 @@ export function createNominatimClient({
     };
   }
 
+  const reverseCache = new Map<string, Promise<ReverseAddress | null>>();
+
   return {
+    /**
+     * Endereço da coordenada marcada no mapa (LDMF-542). Passa pela mesma
+     * fila (1 por segundo) e tem cache por ponto, arredondado a ~1 m.
+     */
+    reverse(coords: Coords): Promise<ReverseAddress | null> {
+      const key = new URLSearchParams({
+        lat: coords.lat.toFixed(5),
+        lon: coords.lng.toFixed(5),
+        format: "jsonv2",
+        addressdetails: "1",
+        zoom: "18",
+      }).toString();
+
+      const cached = reverseCache.get(key);
+      if (cached) return cached;
+
+      const request = throttled(async () => {
+        const response = await fetchFn(`${REVERSE_URL}?${key}`);
+        if (!response.ok) throw new Error(`Nominatim respondeu ${response.status}`);
+        const result = (await response.json()) as { address?: NominatimAddress } | null;
+        return parseReverseAddress(result?.address);
+      });
+
+      reverseCache.set(key, request);
+      request.catch(() => reverseCache.delete(key));
+      return request;
+    },
+
     /**
      * Rua e número dentro da cidade. Busca estruturada sem o bairro: em
      * cidade pequena o Nominatim não conhece o bairro e acaba casando o nome
@@ -267,6 +341,7 @@ export function createNominatimClient({
     /** Limpa cache e fila - para testes. */
     reset() {
       cache.clear();
+      reverseCache.clear();
       queue = Promise.resolve();
       lastRequestAt = Number.NEGATIVE_INFINITY;
     },

@@ -150,4 +150,53 @@ describe("LeafletAddressMap", () => {
       expect(lastView(setView).zoom).toBe(15);
     });
   });
+
+  describe("câmera por etapa (LDMF-542)", () => {
+    const ES = { south: -21.3, west: -41.87, north: -17.89, east: -39.66 };
+    const container = (root: HTMLElement) => root.querySelector<HTMLElement>(".leaflet-container")!;
+
+    it("não mostra os botões + e −", () => {
+      const { container: root } = render(<LeafletAddressMap value={null} onSelect={vi.fn()} />);
+      expect(root.querySelector(".leaflet-control-zoom")).toBeNull();
+    });
+
+    it("etapas travadas: sem arrasto, mas o clique continua marcando o pino", () => {
+      const onSelect = vi.fn();
+      const { container: root } = render(
+        <LeafletAddressMap value={null} onSelect={onSelect} stage="state" viewBounds={ES} />,
+      );
+
+      // O Leaflet põe `leaflet-grab` no mapa enquanto o arrasto está ligado.
+      expect(container(root)).not.toHaveClass("leaflet-grab");
+      fireEvent.click(container(root), { clientX: 10, clientY: 10 });
+      expect(onSelect).toHaveBeenCalledTimes(1);
+    });
+
+    it("etapa livre: arrasto ligado", () => {
+      const { container: root, rerender } = render(
+        <LeafletAddressMap value={null} onSelect={vi.fn()} stage="city" viewBounds={ES} />,
+      );
+      expect(container(root)).not.toHaveClass("leaflet-grab");
+
+      rerender(
+        <LeafletAddressMap value={CASTELO} onSelect={vi.fn()} stage="free" viewBounds={ES} limitBounds={ES} />,
+      );
+      expect(container(root)).toHaveClass("leaflet-grab");
+    });
+
+    it("roda do mouse dá zoom só na etapa livre", () => {
+      // `addHooks` roda quando o handler da roda é ligado.
+      const wheelOn = vi.spyOn(L.Map.ScrollWheelZoom.prototype, "addHooks");
+      const { rerender } = render(
+        <LeafletAddressMap value={null} onSelect={vi.fn()} stage="city" viewBounds={ES} />,
+      );
+      expect(wheelOn).not.toHaveBeenCalled();
+
+      rerender(
+        <LeafletAddressMap value={CASTELO} onSelect={vi.fn()} stage="free" viewBounds={ES} limitBounds={ES} />,
+      );
+      expect(wheelOn).toHaveBeenCalledTimes(1);
+      wheelOn.mockRestore();
+    });
+  });
 });

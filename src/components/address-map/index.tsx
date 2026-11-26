@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 
+import type { MapBounds, MapStage } from "@/lib/map-area";
 import { Coords } from "@/types/restaurant";
 
 export type AddressMapProps = {
@@ -28,6 +29,15 @@ export type AddressMapProps = {
    * outro bairro sem coordenada, que cai de novo no centro da cidade).
    */
   recenterKey?: number;
+
+  /**
+   * Etapa da câmera (LDMF-542): `country`, `state` e `city` enquadram
+   * `viewBounds` e travam o mapa; `free` solta a câmera dentro de
+   * `limitBounds`. Sem etapa, o mapa fica livre e sem limite.
+   */
+  stage?: MapStage;
+  viewBounds?: MapBounds;
+  limitBounds?: MapBounds | null;
 };
 
 const boxClass =
