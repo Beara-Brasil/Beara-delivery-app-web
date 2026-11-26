@@ -11,6 +11,7 @@ import type {
   SourcedCoords,
 } from "@/lib/address-coordinates";
 import type { AddressFieldLocks } from "@/hooks/use-address-fields";
+import { useMapArea } from "@/hooks/use-map-area";
 import { isNoNumber, NO_NUMBER } from "@/hooks/use-form-validation";
 import type { IbgeState } from "@/services/ibge";
 import { Coords } from "@/types/restaurant";
@@ -154,6 +155,15 @@ export function AddressCoreFields({
   const [currentState, currentCity, currentNeighborhood, currentNumber] =
     addressForm.watch(["state", "city", "neighborhood", "number"]);
   const errors = addressForm.formState.errors;
+
+  // Câmera do mapa por etapa (LDMF-542): Brasil → estado → cidade travados;
+  // bairro escrito ou pino marcado solta a câmera dentro da cidade.
+  const mapArea = useMapArea({
+    state: currentState,
+    city: currentCity,
+    neighborhood: currentNeighborhood,
+    pin: addressCoords?.coords ?? null,
+  });
   // "Sem número" é o próprio valor S/N no campo: endereço salvo assim já abre
   // com a caixa marcada, e trocar rua/bairro (que limpa o número) desmarca.
   const noNumber = isNoNumber(currentNumber);
@@ -664,6 +674,9 @@ export function AddressCoreFields({
           onSelect={(coords) => applyCoords(coords, "manual")}
           zoom={pinZoom}
           recenterKey={pinRecenterKey}
+          stage={mapArea.stage}
+          viewBounds={mapArea.viewBounds}
+          limitBounds={mapArea.limitBounds}
         />
         {addressNotFound && (
           <p

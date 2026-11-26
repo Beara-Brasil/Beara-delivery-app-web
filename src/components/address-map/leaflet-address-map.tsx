@@ -2,7 +2,12 @@
 
 import { useEffect, useRef } from "react";
 
-import type { LeafletEventHandlerFnMap, Marker as LeafletMarker } from "leaflet";
+import type {
+  LatLngBoundsExpression,
+  LeafletEventHandlerFnMap,
+  Map as LeafletMap,
+  Marker as LeafletMarker,
+} from "leaflet";
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
 
 import {
@@ -11,6 +16,13 @@ import {
   OSM_MAX_ZOOM,
   OSM_TILE_URL,
 } from "@/lib/leaflet-setup";
+import { NEIGHBORHOOD_ZOOM } from "@/hooks/use-address-pin";
+import {
+  BRAZIL_BOUNDS,
+  boundsKey,
+  type MapBounds,
+  type MapStage,
+} from "@/lib/map-area";
 import { Coords } from "@/types/restaurant";
 
 import type { AddressMapProps } from "./index";
@@ -25,46 +37,132 @@ const FALLBACK_CENTER: Coords = { lat: -15.7942, lng: -47.8822 };
 const FALLBACK_ZOOM = 4;
 const PINNED_ZOOM = 16;
 
+/** Zoom mínimo ao entrar na etapa livre: o nível do bairro. */
+const FREE_MIN_ENTRY_ZOOM = NEIGHBORHOOD_ZOOM;
+
+function toLatLngBounds(bounds: MapBounds): LatLngBoundsExpression {
+  return [
+    [bounds.south, bounds.west],
+    [bounds.north, bounds.east],
+  ];
+}
+
+/** Liga ou desliga tudo o que mexe na câmera. O clique no mapa fica sempre. */
+function setCameraLocked(map: LeafletMap, locked: boolean) {
+  const handlers = [
+    map.dragging,
+    map.touchZoom,
+    map.doubleClickZoom,
+    map.boxZoom,
+    map.keyboard,
+  ];
+  for (const handler of handlers) {
+    if (!handler) continue;
+    if (locked) handler.disable();
+    else handler.enable();
+  }
+}
+
+/** Container sem tamanho (teste, aba escondida): o Leaflet não enquadra. */
+function hasSize(map: LeafletMap) {
+  const size = map.getSize();
+  return size.x > 0 && size.y > 0;
+}
+
 /**
- * O `center` do `MapContainer` só vale no mount. Aqui o mapa recentraliza a
- * cada novo posicionamento do pino (coordenada nova ou `recenterKey` novo).
- * Entre uma mudança e outra o mapa é do cliente: zoom e arrasto dele não são
- * desfeitos.
+ * Câmera por etapa (LDMF-542, ver `docs/mapa-do-endereco.md`):
+ *
+ * - etapas travadas (`country`, `state`, `city`): enquadra `viewBounds` e
+ *   desliga arrasto e zoom. O clique continua: marcar um ponto já pula para
+ *   a etapa livre;
+ * - etapa livre (`free`): arrasto e zoom ligados, presos a `limitBounds`
+ *   (a cidade com folga). Aproxima à vontade; afasta só até ver a cidade.
+ *
+ * Na etapa livre o mapa recentraliza a cada novo posicionamento do pino
+ * (coordenada nova ou `recenterKey` novo) e, fora disso, é do cliente.
  */
-function SyncView({
+function CameraController({
   value,
   zoom,
   recenterKey,
+  stage,
+  viewBounds,
+  limitBounds,
 }: {
   value: Coords | null;
   zoom?: number;
   recenterKey?: number;
+  stage: MapStage;
+  viewBounds?: MapBounds;
+  limitBounds?: MapBounds | null;
 }) {
   const map = useMap();
-  const hadValue = useRef(value !== null);
+  const free = stage === "free";
+  const viewKey = boundsKey(viewBounds);
+  const limitKey = boundsKey(limitBounds);
 
-  const lat = value?.lat;
-  const lng = value?.lng;
+  // Os retângulos chegam como objetos novos a cada render: o efeito depende
+  // da chave e lê o valor atual pelo ref.
+  const viewRef = useRef(viewBounds);
+  viewRef.current = viewBounds;
+  const limitRef = useRef(limitBounds);
+  limitRef.current = limitBounds;
 
   // O zoom só vale junto com o posicionamento que o trouxe.
   const zoomRef = useRef(zoom);
   zoomRef.current = zoom;
+  const wasFree = useRef(free);
 
+  // Etapas travadas: enquadra e trava.
   useEffect(() => {
-    if (lat === undefined || lng === undefined) {
-      if (hadValue.current) map.setZoom(FALLBACK_ZOOM);
-      hadValue.current = false;
+    if (free) return;
+    setCameraLocked(map, true);
+    map.setMaxBounds(null as unknown as LatLngBoundsExpression);
+    map.setMinZoom(0);
+    const bounds = viewRef.current ?? BRAZIL_BOUNDS;
+    if (hasSize(map)) map.fitBounds(toLatLngBounds(bounds));
+  }, [map, free, viewKey]);
+
+  // Etapa livre: solta a câmera dentro da cidade com folga.
+  useEffect(() => {
+    if (!free) return;
+    setCameraLocked(map, false);
+    const limit = limitRef.current;
+    if (!limit) {
+      map.setMaxBounds(null as unknown as LatLngBoundsExpression);
+      map.setMinZoom(0);
       return;
     }
+    const bounds = toLatLngBounds(limit);
+    map.options.maxBoundsViscosity = 1;
+    map.setMaxBounds(bounds);
+    // Afastar trava na vista da cidade inteira.
+    if (hasSize(map)) map.setMinZoom(map.getBoundsZoom(bounds));
+  }, [map, free, limitKey]);
 
-    // Sem zoom pedido: a primeira coordenada aproxima e as seguintes mantêm o
-    // zoom do cliente.
+  const lat = value?.lat;
+  const lng = value?.lng;
+
+  // Etapa livre: acompanha o pino.
+  const hadPin = useRef(value !== null);
+  useEffect(() => {
+    const hasPin = lat !== undefined && lng !== undefined;
+    // Entrar na etapa livre ou o pino aparecer pela primeira vez.
+    const entering = free && (!wasFree.current || !hadPin.current);
+    wasFree.current = free;
+    hadPin.current = hasPin;
+    if (!free || !hasPin) return;
+
+    // Entrando agora (clique no Brasil ou no estado, bairro escolhido): vai
+    // direto ao nível do bairro. Já livre: mantém o zoom do cliente, a não
+    // ser que o posicionamento peça outro.
+    const current = map.getZoom();
     const nextZoom =
-      zoomRef.current ?? (hadValue.current ? map.getZoom() : PINNED_ZOOM);
+      zoomRef.current ??
+      (entering ? Math.max(current, FREE_MIN_ENTRY_ZOOM) : current);
 
-    map.setView([lat, lng], nextZoom);
-    hadValue.current = true;
-  }, [map, lat, lng, recenterKey]);
+    map.setView([lat!, lng!], nextZoom);
+  }, [map, free, lat, lng, recenterKey]);
 
   return null;
 }
@@ -120,6 +218,10 @@ export default function LeafletAddressMap({
   mapHeight = 400,
   zoom,
   recenterKey,
+  // Sem etapa (uso antigo): câmera livre e sem limite.
+  stage = "free",
+  viewBounds,
+  limitBounds,
 }: AddressMapProps) {
   const initial = value ?? FALLBACK_CENTER;
 
@@ -135,6 +237,9 @@ export default function LeafletAddressMap({
         zoom={value ? (zoom ?? PINNED_ZOOM) : FALLBACK_ZOOM}
         // Rolagem da página não deve virar zoom no mapa (o formulário rola).
         scrollWheelZoom={false}
+        // Botões + e − ocultos (LDMF-542): a câmera segue as etapas e, na
+        // livre, o zoom é por gesto. Para voltar, troque para `true`.
+        zoomControl={false}
         style={{ height: "100%", width: "100%" }}
       >
         <TileLayer
@@ -142,7 +247,14 @@ export default function LeafletAddressMap({
           attribution={OSM_ATTRIBUTION}
           maxZoom={OSM_MAX_ZOOM}
         />
-        <SyncView value={value} zoom={zoom} recenterKey={recenterKey} />
+        <CameraController
+          value={value}
+          zoom={zoom}
+          recenterKey={recenterKey}
+          stage={stage}
+          viewBounds={viewBounds}
+          limitBounds={limitBounds}
+        />
         <ClickToSelect onSelect={onSelect} />
         {value && <DraggablePin value={value} onSelect={onSelect} />}
       </MapContainer>
