@@ -19,29 +19,29 @@ const { driver, confirmation, position } = vi.hoisted(() => ({
   position: { position: null, resolvePosition: async () => ({ ok: false }) },
 }));
 
-vi.mock("@/hooks/use-delivery-driver", () => ({
+vi.mock("@/features/courier/hooks/use-delivery-driver", () => ({
   useDeliveryDriver: () => driver.current,
 }));
-vi.mock("@/hooks/use-accept-confirmation", () => ({
+vi.mock("@/features/courier/hooks/use-accept-confirmation", () => ({
   useAcceptConfirmation: () => confirmation,
 }));
-vi.mock("@/hooks/use-courier-position", () => ({
+vi.mock("@/features/courier/hooks/use-courier-position", () => ({
   useCourierPosition: () => position,
 }));
 
 // O card e os diálogos não interessam aqui - só o que cada filtro mostra.
-vi.mock("@/components/delivery-dashboard/delivery-card", () => ({
+vi.mock("@/features/courier/components/delivery-card", () => ({
   DeliveryCard: ({ delivery }: { delivery: Delivery }) => (
     <div data-testid="card">{delivery.id}</div>
   ),
 }));
-vi.mock("@/components/delivery-dashboard/accept-confirm-dialog", () => ({
+vi.mock("@/features/courier/components/accept-confirm-dialog", () => ({
   AcceptConfirmDialog: () => null,
 }));
-vi.mock("@/components/delivery-dashboard/return-dialog", () => ({
+vi.mock("@/features/courier/components/return-dialog", () => ({
   ReturnDialog: () => null,
 }));
-vi.mock("@/components/delivery-dashboard/location-dialog", () => ({
+vi.mock("@/features/courier/components/location-dialog", () => ({
   LocationDialog: () => null,
 }));
 

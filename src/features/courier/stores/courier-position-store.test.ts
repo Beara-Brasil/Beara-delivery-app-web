@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { useAuthStore, type User } from "./auth-store";
+import { useAuthStore, type User } from "@/stores/auth-store";
 import { useCourierPositionStore } from "./courier-position-store";
 
 const initialAuthState = useAuthStore.getState();

@@ -13,7 +13,7 @@ import {
   MAX_ACCEPT_DISTANCE_KM,
   SUPPORT_EMAIL,
   type AcceptDistanceCheck,
-} from "@/lib/accept-distance";
+} from "@/features/courier/lib/accept-distance";
 import { getRestaurantName } from "@/lib/delivery";
 import type { Delivery } from "@/services/api";
 

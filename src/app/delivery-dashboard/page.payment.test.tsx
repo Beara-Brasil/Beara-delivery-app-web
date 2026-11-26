@@ -35,27 +35,27 @@ const { driver, confirmation, position, flags } = vi.hoisted(() => ({
   flags: { requestEnabled: false },
 }));
 
-vi.mock("@/hooks/use-delivery-driver", () => ({
+vi.mock("@/features/courier/hooks/use-delivery-driver", () => ({
   useDeliveryDriver: () => driver.current,
 }));
-vi.mock("@/hooks/use-accept-confirmation", () => ({
+vi.mock("@/features/courier/hooks/use-accept-confirmation", () => ({
   useAcceptConfirmation: () => confirmation,
 }));
-vi.mock("@/hooks/use-courier-position", () => ({
+vi.mock("@/features/courier/hooks/use-courier-position", () => ({
   useCourierPosition: () => position,
 }));
-vi.mock("@/services/manager-requests", () => ({
+vi.mock("@/features/courier/services/manager-requests", () => ({
   get PAYMENT_CHANGE_REQUEST_ENABLED() {
     return flags.requestEnabled;
   },
 }));
-vi.mock("@/components/delivery-dashboard/accept-confirm-dialog", () => ({
+vi.mock("@/features/courier/components/accept-confirm-dialog", () => ({
   AcceptConfirmDialog: () => null,
 }));
-vi.mock("@/components/delivery-dashboard/return-dialog", () => ({
+vi.mock("@/features/courier/components/return-dialog", () => ({
   ReturnDialog: () => null,
 }));
-vi.mock("@/components/delivery-dashboard/location-dialog", () => ({
+vi.mock("@/features/courier/components/location-dialog", () => ({
   LocationDialog: () => null,
 }));
 

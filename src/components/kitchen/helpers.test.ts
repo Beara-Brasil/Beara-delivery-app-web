@@ -1,4 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+// A chave do entregador (LDMF-539) muda o selo de entrega. Os testes de
+// sempre rodam com ela ligada; o da área desligada troca o valor.
+const courier = vi.hoisted(() => ({ enabled: true }));
+vi.mock("@/features/courier/config", () => ({
+  get COURIER_ENABLED() {
+    return courier.enabled;
+  },
+}));
 import {
   canCancelKitchenOrder,
   getAddOnName,
@@ -321,6 +330,20 @@ describe("getFulfillmentLabel / getFulfillmentToneClass", () => {
   it("status de entrega desconhecido cai no rótulo genérico 'Entrega'", () => {
     const order = baseOrder({ delivery: { id: "d1", status: "ALGO_NOVO" } });
     expect(getFulfillmentLabel(order)).toBe("Entrega");
+  });
+
+  it("com a área do entregador desligada, entrega pendente não diz 'aguardando entregador'", () => {
+    courier.enabled = false;
+    try {
+      const pending = baseOrder({ delivery: { id: "d1", status: "PENDING" } });
+      expect(getFulfillmentLabel(pending)).toBe("Entrega");
+      expect(getFulfillmentToneClass(pending)).toContain("slate");
+
+      const pickup = baseOrder({ fulfillmentType: "PICKUP" });
+      expect(getFulfillmentLabel(pickup)).toBe("Retirada no local");
+    } finally {
+      courier.enabled = true;
+    }
   });
 });
 

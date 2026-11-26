@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { COURIER_ENABLED } from "../src/features/courier/config";
 import { loginAsOwner } from "./helpers/session";
 import { hasOwnerCredentials } from "./helpers/test-config";
 
@@ -69,7 +70,17 @@ test.describe("Criação de Contas - Equipe e Permissões (Staff)", () => {
       await expect(dialog).toBeHidden({ timeout: 15_000 });
     });
 
+    // Área do entregador desligada (LDMF-539): a função some do convite.
     await test.step("4. Convidar Entregador (Delivery)", async () => {
+      if (!COURIER_ENABLED) {
+        await inviteButton.click();
+        const dialog = page.getByRole("dialog");
+        await expect(dialog).toBeVisible();
+        await expect(dialog.locator('#invite-role option[value="delivery"]')).toHaveCount(0);
+        await dialog.getByRole("button", { name: "Cancelar" }).click();
+        return;
+      }
+
       await inviteButton.click();
 
       const dialog = page.getByRole("dialog");

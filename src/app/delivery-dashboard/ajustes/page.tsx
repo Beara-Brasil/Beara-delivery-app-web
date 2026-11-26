@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { ChevronRight, Home, LogOut } from "lucide-react";
 
-import { ScreenHeader } from "@/components/delivery-dashboard/screen-header";
+import { ScreenHeader } from "@/features/courier/components/screen-header";
 import { useAuth } from "@/contexts/auth-provider";
-import { useAcceptConfirmation } from "@/hooks/use-accept-confirmation";
+import { useAcceptConfirmation } from "@/features/courier/hooks/use-accept-confirmation";
 
 function SettingToggle({
   title,

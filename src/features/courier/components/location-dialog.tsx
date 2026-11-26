@@ -19,7 +19,7 @@ import {
   useGeolocationPermission,
   type PositionFailure,
   type TextMatch,
-} from "@/hooks/use-courier-position";
+} from "@/features/courier/hooks/use-courier-position";
 
 const FAILURE_MESSAGE: Record<PositionFailure, string> = {
   denied: "Você bloqueou o acesso à localização neste aparelho.",

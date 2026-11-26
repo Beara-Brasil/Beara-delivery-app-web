@@ -7,7 +7,7 @@ import { io } from "socket.io-client";
 import { apiService, PaymentMethod, type Delivery } from "@/services/api";
 import { socketAuthProvider } from "@/lib/socket-auth";
 import { useAuthStore } from "@/stores";
-import { useCourierPositionStore } from "@/stores/courier-position-store";
+import { useCourierPositionStore } from "@/features/courier/stores/courier-position-store";
 import { useDeliveryDriver, useDeliveryHistory } from "./use-delivery-driver";
 
 // A URL do socket é lida quando o módulo carrega: precisa existir antes do import.
