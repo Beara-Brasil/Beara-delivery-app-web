@@ -70,6 +70,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // Teclado do celular (LDMF-541): no Android a página encolhe até ele, em
+  // vez de o teclado cobrir a parte de baixo. O Safari do iPhone ignora; lá
+  // quem compensa é o DialogContent (useKeyboardViewport).
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({
