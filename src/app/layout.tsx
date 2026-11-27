@@ -22,11 +22,12 @@ const figtree = Figtree({
 
 export const metadata: Metadata = {
   title: {
-    default: "Beara Delivery - O delivery mais fofo",
+    default: "Beara Delivery",
     template: "%s | Beara Delivery",
   },
-  description:
-    "O delivery mais fofo e rápido da sua cidade. Peça em até 30 minutos.",
+  // Prévia do link (WhatsApp, redes). Sem promessa de prazo: o tempo de
+  // entrega é de cada restaurante.
+  description: "Peça nos restaurantes da sua cidade pelo Beara Delivery.",
   icons: {
     icon: [
       { url: "/icons/favicon.ico" },
@@ -47,8 +48,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "pt_BR",
     siteName: "Beara Delivery",
-    title: "Beara Delivery - O delivery mais fofo",
-    description: "O delivery mais fofo e rápido da sua cidade",
+    title: "Beara Delivery",
+    description: "Peça nos restaurantes da sua cidade pelo Beara Delivery.",
     images: [
       {
         url: "/icons/og-image.png",
@@ -61,7 +62,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Beara Delivery",
-    description: "O delivery mais fofo e rápido",
+    description: "Peça nos restaurantes da sua cidade pelo Beara Delivery.",
     images: ["/icons/twitter-card.png"],
   },
 };

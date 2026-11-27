@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { BearaDeliveryFooter } from "@/components/beara-delivery/footer";
-import { BearaDeliveryMark } from "@/components/beara-delivery/mark";
 import { BearaDeliveryShell } from "@/components/beara-delivery/shell";
 
 import { FaqList } from "./_components/faq-list";
@@ -10,10 +9,29 @@ import { LandingHeader } from "./_components/landing-header";
 import { OrderBoardDemo } from "./_components/order-board-demo";
 import { ADVANTAGES, HERO, REGISTER_HREF, STEPS } from "./content";
 
+const LANDING_TITLE = "Beara Delivery para restaurantes";
+const LANDING_DESCRIPTION =
+  "Cadastre seu restaurante no Beara Delivery e receba pedidos de clientes da sua região.";
+
+// A prévia do link (WhatsApp, redes) não herda o título da página: sem o
+// `openGraph` daqui, ela mostrava o texto do app para clientes.
 export const metadata: Metadata = {
   title: "Para restaurantes",
-  description:
-    "Cadastre seu restaurante no Beara Delivery e receba pedidos de clientes da sua região.",
+  description: LANDING_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    siteName: "Beara Delivery",
+    title: LANDING_TITLE,
+    description: LANDING_DESCRIPTION,
+    images: [{ url: "/icons/og-image.png", width: 1200, height: 630, alt: "Beara Delivery" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: LANDING_TITLE,
+    description: LANDING_DESCRIPTION,
+    images: ["/icons/twitter-card.png"],
+  },
 };
 
 const sectionTitle =
@@ -29,11 +47,6 @@ export default function RestaurantLandingPage() {
 
       <main className="flex flex-1 flex-col">
         <section className="relative overflow-hidden bg-(--bd-hero-bg) text-(--bd-hero-ink)">
-          <BearaDeliveryMark
-            decorative
-            size={640}
-            className="pointer-events-none absolute right-[-6%] bottom-[-14%] h-auto w-[min(52vw,640px)] text-(--bd-hero-mark) opacity-[.09]"
-          />
           <div
             className="pointer-events-none absolute top-[-30%] right-[-8%] aspect-square w-[min(70vw,820px)] rounded-full bg-[radial-gradient(circle,var(--bd-hero-glow)_0%,transparent_70%)]"
             aria-hidden
