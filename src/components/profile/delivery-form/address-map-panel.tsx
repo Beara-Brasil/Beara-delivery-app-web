@@ -205,6 +205,8 @@ export function AddressMapPanel({
         </button>
       )}
 
+      {/* Sem pino não tem linha: o espaço preso é curto, e salvar sem pino
+          já avisa "Marque no mapa onde fica o endereço" (pedido do produto). */}
       {addressNotFound ? (
         <p role="alert" className="mt-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
           Não encontramos esse endereço no mapa. Arraste o pino até a {placeLabel}.
@@ -213,11 +215,7 @@ export function AddressMapPanel({
         <p className="mt-1.5 text-xs text-muted-foreground">
           Confira se o pino está na {placeLabel}. Se não estiver, arraste.
         </p>
-      ) : (
-        <p className="mt-1.5 text-xs font-medium text-destructive">
-          Escolha o bairro ou toque no mapa para marcar o endereço. Sem o pino não dá para salvar.
-        </p>
-      )}
+      ) : null}
       {deviceLocationError && (
         <p role="alert" className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-400">
           {deviceLocationError}

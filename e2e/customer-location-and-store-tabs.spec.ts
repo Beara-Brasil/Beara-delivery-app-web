@@ -34,9 +34,8 @@ test.describe("Cliente - Localização, Abas da Loja e Pedidos", () => {
     }
 
     await expect(sheetDialog.getByText("Seu endereço")).toBeVisible();
-    await expect(
-      sheetDialog.getByText(/Comece pelo CEP ou escolha estado e cidade/i),
-    ).toBeVisible();
+    // O subtítulo saiu (LDMF-542); o formulário é reconhecido pelo CEP.
+    await expect(sheetDialog.getByLabel(/CEP/)).toBeVisible();
   });
 
   test("página pública do restaurante alterna entre Cardápio, Informações e Avaliações", async ({
