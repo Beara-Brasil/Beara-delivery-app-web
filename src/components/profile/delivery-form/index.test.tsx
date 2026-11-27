@@ -44,6 +44,7 @@ type Extra = {
   placeLabel?: string;
   zipCodeHint?: string | null;
   isLoadingCep?: boolean;
+  addressCoords?: { coords: { lat: number; lng: number }; source: string } | null;
 };
 
 function Harness({ initialStreet, ...extra }: Extra) {
@@ -419,12 +420,16 @@ describe("DeliveryForm: ordem e trava dos campos", () => {
 
   describe("opções do endereço da loja (LDMF-263)", () => {
     it("por padrão (cliente): caixa de padrão, sem Referência, texto fala em casa", () => {
-      renderForm({ addressNotFound: true });
+      const { unmount } = renderForm({ addressNotFound: true });
 
       expect(screen.getByLabelText("Definir como endereço padrão")).toBeTruthy();
       expect(screen.queryByLabelText("Referência")).toBeNull();
-      expect(screen.getByText(/Confira se o pino está na sua casa/)).toBeTruthy();
       expect(screen.getByRole("alert").textContent).toContain("até a sua casa");
+      unmount();
+
+      // Com o pino marcado, a linha embaixo do mapa vira a dica (LDMF-542).
+      renderForm({ addressCoords: { coords: { lat: -20.6, lng: -41.2 }, source: "manual" } });
+      expect(screen.getByText(/Confira se o pino está na sua casa/)).toBeTruthy();
     });
 
     it("caixa de padrão travada mostra o motivo (LDMF-262)", () => {
@@ -444,7 +449,6 @@ describe("DeliveryForm: ordem e trava dos campos", () => {
       });
 
       expect(screen.queryByLabelText("Definir como endereço padrão")).toBeNull();
-      expect(screen.getByText(/Confira se o pino está na sua loja/)).toBeTruthy();
       expect(screen.getByRole("alert").textContent).toContain("até a sua loja");
     });
 

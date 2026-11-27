@@ -1,0 +1,225 @@
+"use client";
+
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { LocateFixed } from "lucide-react";
+
+import { AddressMap } from "@/components/address-map";
+import type { MapArea } from "@/hooks/use-map-area";
+import { cn } from "@/lib/utils";
+import { Coords } from "@/types/restaurant";
+
+/**
+ * Mapa do endereço preso no topo do formulário (LDMF-542). Ver
+ * `docs/mapa-do-endereco.md`.
+ *
+ * - Dentro de janela que rola (modal do perfil, gaveta do cabeçalho), o mapa
+ *   fica fixo no topo enquanto os campos rolam por baixo. Sem janela que rola
+ *   (checkout, que rola a página inteira e tem cabeçalho fixo), ele só fica
+ *   no topo, sem prender.
+ * - No celular, com o foco num campo de digitação, o mapa encolhe: o teclado
+ *   já ocupa metade da tela.
+ */
+export const MAP_HEIGHT = 180;
+export const MAP_HEIGHT_DESKTOP = 280;
+export const MAP_HEIGHT_TYPING = 110;
+
+/** Campos que abrem o teclado do celular (não conta checkbox nem select). */
+const TYPING_SELECTOR =
+  "input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]), textarea";
+
+function isTypingField(element: EventTarget | null): boolean {
+  return element instanceof Element && element.matches(TYPING_SELECTOR);
+}
+
+function findScrollParent(element: HTMLElement | null): HTMLElement | null {
+  let node = element?.parentElement ?? null;
+  while (node && node !== document.body) {
+    const { overflowY } = getComputedStyle(node);
+    if (overflowY === "auto" || overflowY === "scroll") return node;
+    node = node.parentElement;
+  }
+  return null;
+}
+
+/**
+ * Estilo para o mapa colar no topo da janela que rola, por cima do padding
+ * dela (o `sticky` conta a partir do padding). Cada janela tem um padding, por
+ * isso é medido, e não fixo no CSS.
+ */
+function useStickyToScrollParent(ref: React.RefObject<HTMLElement | null>) {
+  const [style, setStyle] = useState<CSSProperties | null>(null);
+
+  useEffect(() => {
+    const parent = findScrollParent(ref.current);
+    if (!parent) return;
+
+    const measure = () => {
+      const css = getComputedStyle(parent);
+      const top = parseFloat(css.paddingTop) || 0;
+      const left = parseFloat(css.paddingLeft) || 0;
+      const right = parseFloat(css.paddingRight) || 0;
+      setStyle({
+        position: "sticky",
+        // No lugar parado, o paddingTop vira o respiro acima do mapa.
+        top: -top,
+        paddingTop: top,
+        marginLeft: -left,
+        marginRight: -right,
+        paddingLeft: left,
+        paddingRight: right,
+      });
+    };
+
+    measure();
+    // O padding muda com o breakpoint (gaveta: 16px no celular, 24px no PC).
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [ref]);
+
+  return style;
+}
+
+/** Foco num campo de digitação do formulário, só em tela de toque. */
+function useTypingInForm(ref: React.RefObject<HTMLElement | null>) {
+  const [typing, setTyping] = useState(false);
+
+  useEffect(() => {
+    const form = ref.current?.parentElement;
+    if (!form) return;
+    const touch = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+    if (!touch) return;
+
+    const onFocusIn = (event: FocusEvent) => setTyping(isTypingField(event.target));
+    // Do Número para o Complemento não pisca: o próximo foco já é campo.
+    const onFocusOut = (event: FocusEvent) =>
+      setTyping(isTypingField(event.relatedTarget) && form.contains(event.relatedTarget as Node));
+
+    form.addEventListener("focusin", onFocusIn);
+    form.addEventListener("focusout", onFocusOut);
+    return () => {
+      form.removeEventListener("focusin", onFocusIn);
+      form.removeEventListener("focusout", onFocusOut);
+    };
+  }, [ref]);
+
+  return typing;
+}
+
+function useIsDesktop() {
+  const [desktop, setDesktop] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia?.("(min-width: 640px)");
+    if (!query) return;
+    const update = () => setDesktop(query.matches);
+    update();
+    query.addEventListener?.("change", update);
+    return () => query.removeEventListener?.("change", update);
+  }, []);
+  return desktop;
+}
+
+type Props = {
+  coords: Coords | null;
+  onSelect: (coords: Coords) => void;
+  zoom?: number;
+  recenterKey?: number;
+  mapArea: MapArea;
+  placeLabel: string;
+  isSearchingAddress?: boolean;
+  isLocatingPin?: boolean;
+  addressNotFound?: boolean;
+  showUseLocation?: boolean;
+  onUseLocation: () => void;
+  locatingDevice: boolean;
+  deviceLocationError: string | null;
+};
+
+export function AddressMapPanel({
+  coords,
+  onSelect,
+  zoom,
+  recenterKey,
+  mapArea,
+  placeLabel,
+  isSearchingAddress,
+  isLocatingPin,
+  addressNotFound,
+  showUseLocation,
+  onUseLocation,
+  locatingDevice,
+  deviceLocationError,
+}: Props) {
+  const ref = useRef<HTMLDivElement>(null);
+  const stickyStyle = useStickyToScrollParent(ref);
+  const typing = useTypingInForm(ref);
+  const desktop = useIsDesktop();
+
+  const mapHeight = typing ? MAP_HEIGHT_TYPING : desktop ? MAP_HEIGHT_DESKTOP : MAP_HEIGHT;
+
+  return (
+    <div
+      ref={ref}
+      data-testid="address-map-panel"
+      // `order-first`: fica no topo na tela, mas no código continua depois
+      // dos campos, para a ordem do Tab seguir CEP → ... → mapa.
+      className={cn(
+        "order-first md:col-span-2",
+        stickyStyle && "z-10 bg-card pb-3 shadow-[0_8px_12px_-10px_rgba(0,0,0,.25)] dark:bg-background",
+      )}
+      style={stickyStyle ?? undefined}
+    >
+      <span className="sr-only">Localização no mapa</span>
+      <div className="relative">
+        <AddressMap
+          mapHeight={mapHeight}
+          value={coords}
+          onSelect={onSelect}
+          zoom={zoom}
+          recenterKey={recenterKey}
+          stage={mapArea.stage}
+          viewBounds={mapArea.viewBounds}
+          limitBounds={mapArea.limitBounds}
+        />
+        {(isSearchingAddress || isLocatingPin) && (
+          <span
+            role="status"
+            className="absolute top-2 left-2 z-[1000] rounded-full bg-card/95 px-2.5 py-1 text-xs font-medium shadow"
+          >
+            {isSearchingAddress ? "Buscando endereço..." : "Localizando..."}
+          </span>
+        )}
+        {showUseLocation && (
+          <button
+            type="button"
+            onClick={onUseLocation}
+            disabled={locatingDevice}
+            title={`Use se você está na ${placeLabel} agora.`}
+            className="absolute right-2 bottom-2 z-[1000] inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full bg-card px-3 text-xs font-semibold text-foreground shadow-md disabled:opacity-60"
+          >
+            <LocateFixed className="size-4 text-brand-500" aria-hidden />
+            {locatingDevice ? "Localizando..." : "Usar minha localização"}
+          </button>
+        )}
+      </div>
+
+      {addressNotFound ? (
+        <p role="alert" className="mt-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+          Não encontramos esse endereço no mapa. Arraste o pino até a {placeLabel}.
+        </p>
+      ) : coords ? (
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          Confira se o pino está na {placeLabel}. Se não estiver, arraste.
+        </p>
+      ) : (
+        <p className="mt-1.5 text-xs font-medium text-destructive">
+          Escolha o bairro ou toque no mapa para marcar o endereço. Sem o pino não dá para salvar.
+        </p>
+      )}
+      {deviceLocationError && (
+        <p role="alert" className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+          {deviceLocationError}
+        </p>
+      )}
+    </div>
+  );
+}

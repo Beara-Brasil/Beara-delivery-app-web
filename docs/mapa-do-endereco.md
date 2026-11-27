@@ -36,11 +36,36 @@ Card: LDMF-542.
 - **A roda do mouse dá zoom só na etapa livre.** Nas travadas ela continua
   rolando o formulário, para a rolagem não parar no mapa. No PC, sem os botões,
   é o jeito de aproximar e afastar.
-- **Mapa com 320 px de altura e zoom fracionado** (`zoomSnap={0.25}`): o
-  enquadramento fica justo no Brasil, no estado e na cidade. Medido com o
-  Brasil no mapa de 500 px de largura (PC): com 220 px e zoom inteiro, o Brasil
-  ocupava 12% do mapa e aparecia a África; com 320 px e zoom fracionado, 46%.
-  No celular (343 px), 68%.
+- **Zoom fracionado** (`zoomSnap={0.25}`): o enquadramento fica justo no
+  Brasil, no estado e na cidade, em vez de arredondar para o nível inteiro de
+  baixo. Com zoom inteiro e 220 px, o Brasil ocupava 12% do mapa no PC e
+  aparecia a África.
+
+## Onde o mapa fica
+
+O mapa fica **no topo do formulário e preso ao rolar** (`AddressMapPanel`, em
+`src/components/profile/delivery-form/address-map-panel.tsx`): o cliente vê o
+mapa reagir enquanto preenche os campos. Embaixo dos campos ele ficava longe
+do que estava sendo preenchido; fixo embaixo, empilhava com o botão Salvar.
+
+| Situação | Altura | Brasil no mapa (etapa Brasil) |
+| --- | --- | --- |
+| Celular | 180 px | 42% (343 px de largura) |
+| Celular, digitando num campo | 110 px | 25% |
+| PC | 280 px | ~53% |
+
+- **Preso só dentro de janela que rola** (modal do perfil e da loja, gaveta do
+  cabeçalho). O padding da janela é medido na hora, para o mapa colar no topo.
+  No **checkout**, que rola a página inteira e tem cabeçalho fixo, o mapa fica
+  no topo do formulário sem prender.
+- **Encolhe com o teclado**: no celular (tela de toque), com o foco num campo
+  de digitação, o mapa cai para 110 px; checkbox e select não contam. Ao sair
+  do campo, volta. No PC não encolhe.
+- **Na tela vem primeiro, no código vem por último** (`order-first`): a ordem
+  do Tab continua CEP → ... → mapa.
+- "Usar minha localização" fica em cima do mapa, e embaixo dele fica uma linha
+  só: o aviso de endereço não encontrado, a dica de conferir o pino, ou o
+  pedido de marcar o pino.
 
 ### De onde vêm os contornos
 
