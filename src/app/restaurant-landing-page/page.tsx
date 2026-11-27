@@ -9,10 +9,29 @@ import { LandingHeader } from "./_components/landing-header";
 import { OrderBoardDemo } from "./_components/order-board-demo";
 import { ADVANTAGES, HERO, REGISTER_HREF, STEPS } from "./content";
 
+const LANDING_TITLE = "Beara Delivery para restaurantes";
+const LANDING_DESCRIPTION =
+  "Cadastre seu restaurante no Beara Delivery e receba pedidos de clientes da sua região.";
+
+// A prévia do link (WhatsApp, redes) não herda o título da página: sem o
+// `openGraph` daqui, ela mostrava o texto do app para clientes.
 export const metadata: Metadata = {
   title: "Para restaurantes",
-  description:
-    "Cadastre seu restaurante no Beara Delivery e receba pedidos de clientes da sua região.",
+  description: LANDING_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    siteName: "Beara Delivery",
+    title: LANDING_TITLE,
+    description: LANDING_DESCRIPTION,
+    images: [{ url: "/icons/og-image.png", width: 1200, height: 630, alt: "Beara Delivery" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: LANDING_TITLE,
+    description: LANDING_DESCRIPTION,
+    images: ["/icons/twitter-card.png"],
+  },
 };
 
 const sectionTitle =

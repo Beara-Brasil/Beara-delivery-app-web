@@ -10,9 +10,26 @@ import { LOGIN_HREF, STEPS } from "@/app/restaurant-landing-page/content";
 
 import { RegisterForm } from "./_components/register-form";
 
+const REGISTER_DESCRIPTION = "Cadastre seu restaurante no Beara Delivery. Sem taxa de adesão.";
+
+// Prévia do link própria: sem ela, valia o texto do app para clientes.
 export const metadata: Metadata = {
   title: "Cadastro de restaurante",
-  description: "Cadastre seu restaurante no Beara Delivery. Sem taxa de adesão.",
+  description: REGISTER_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    siteName: "Beara Delivery",
+    title: "Cadastro de restaurante | Beara Delivery",
+    description: REGISTER_DESCRIPTION,
+    images: [{ url: "/icons/og-image.png", width: 1200, height: 630, alt: "Beara Delivery" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Cadastro de restaurante | Beara Delivery",
+    description: REGISTER_DESCRIPTION,
+    images: ["/icons/twitter-card.png"],
+  },
 };
 
 export default function RestaurantRegisterPage() {
