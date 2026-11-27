@@ -374,7 +374,9 @@ export function MainHeader({
                 </SheetTrigger>
                 <SheetContent
                   side="bottom"
-                  className="max-h-[92dvh] overflow-y-auto rounded-t-3xl bg-card px-4 pb-8 pt-4 sm:max-h-[85vh] sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-xl sm:w-[calc(100%-2rem)] sm:rounded-2xl sm:border sm:border-border sm:shadow-2xl sm:p-6 sm:data-[state=open]:slide-in-from-bottom-0 sm:data-[state=closed]:slide-out-to-bottom-0 sm:data-[state=open]:zoom-in-95 sm:data-[state=closed]:zoom-out-95"
+                  // Trocando o endereço, a rolagem é só dos campos: o título e
+                  // o mapa ficam parados em cima (LDMF-542).
+                  className={`${isChangingLocation ? "flex flex-col overflow-hidden" : "overflow-y-auto"} max-h-[92dvh] rounded-t-3xl bg-card px-4 pb-8 pt-4 sm:max-h-[85vh] sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-xl sm:w-[calc(100%-2rem)] sm:rounded-2xl sm:border sm:border-border sm:shadow-2xl sm:p-6 sm:data-[state=open]:slide-in-from-bottom-0 sm:data-[state=closed]:slide-out-to-bottom-0 sm:data-[state=open]:zoom-in-95 sm:data-[state=closed]:zoom-out-95`}
                 >
                   <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-muted sm:hidden" />
                   {isChangingLocation ? (

@@ -63,9 +63,14 @@ do que estava sendo preenchido; fixo embaixo, empilhava com o botão Salvar.
   do campo, volta. No PC não encolhe.
 - **Na tela vem primeiro, no código vem por último** (`order-first`): a ordem
   do Tab continua CEP → ... → mapa.
-- "Usar minha localização" fica em cima do mapa, e embaixo dele fica uma linha
-  só: o aviso de endereço não encontrado, a dica de conferir o pino, ou o
-  pedido de marcar o pino.
+- **O mapa não se mexe**: na gaveta do cabeçalho, o título "Seu endereço"
+  também fica fora da rolagem (`delivery-address-form.tsx`), como já era no
+  modal do perfil. Só os campos rolam. Com o título rolando junto, o mapa
+  subia até prender e parecia estranho (visto no celular em 27/11).
+- **"Usar minha localização" fica embaixo do mapa** (também na gaveta do
+  cabeçalho) e some enquanto o cliente digita. Embaixo dele fica uma linha só:
+  o aviso de endereço não encontrado, a dica de conferir o pino, ou o pedido
+  de marcar o pino.
 
 ### De onde vêm os contornos
 

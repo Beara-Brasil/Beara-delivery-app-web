@@ -101,12 +101,30 @@ describe("AddressMapPanel (LDMF-542)", () => {
     expect(height()).not.toBe(MAP_HEIGHT_TYPING);
   });
 
-  it("Usar minha localização fica em cima do mapa", () => {
+  it("Usar minha localização some enquanto digita (celular)", () => {
+    mockPointer(true);
+    render(
+      <div>
+        <input aria-label="Rua" />
+        <AddressMapPanel {...baseProps} showUseLocation />
+      </div>,
+    );
+    expect(screen.getByRole("button", { name: "Usar minha localização" })).toBeTruthy();
+
+    act(() => screen.getByLabelText("Rua").focus());
+    expect(screen.queryByRole("button", { name: "Usar minha localização" })).toBeNull();
+  });
+
+  it("Usar minha localização fica embaixo do mapa", () => {
     mockPointer(false);
     const onUseLocation = vi.fn();
     render(<AddressMapPanel {...baseProps} showUseLocation onUseLocation={onUseLocation} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Usar minha localização" }));
+    const button = screen.getByRole("button", { name: "Usar minha localização" });
+    expect(
+      screen.getByTestId("mapa").compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    fireEvent.click(button);
     expect(onUseLocation).toHaveBeenCalledTimes(1);
   });
 });
