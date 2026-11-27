@@ -93,10 +93,12 @@ function CameraController({
   stage,
   viewBounds,
   limitBounds,
+  mapHeight,
 }: {
   value: Coords | null;
   zoom?: number;
   recenterKey?: number;
+  mapHeight: number;
   stage: MapStage;
   viewBounds?: MapBounds;
   limitBounds?: MapBounds | null;
@@ -118,6 +120,18 @@ function CameraController({
   zoomRef.current = zoom;
   const wasFree = useRef(free);
 
+  // Altura mudou (o mapa encolhe com o teclado aberto): o Leaflet precisa
+  // medir de novo antes de enquadrar. Fica antes dos outros efeitos, que
+  // rodam na ordem em que estão escritos.
+  const firstHeight = useRef(true);
+  useEffect(() => {
+    if (firstHeight.current) {
+      firstHeight.current = false;
+      return;
+    }
+    map.invalidateSize();
+  }, [map, mapHeight]);
+
   // Etapas travadas: enquadra e trava.
   useEffect(() => {
     if (free) return;
@@ -126,7 +140,7 @@ function CameraController({
     map.setMinZoom(0);
     const bounds = viewRef.current ?? BRAZIL_BOUNDS;
     if (hasSize(map)) map.fitBounds(toLatLngBounds(bounds));
-  }, [map, free, viewKey]);
+  }, [map, free, viewKey, mapHeight]);
 
   // Etapa livre: solta a câmera dentro da cidade com folga.
   useEffect(() => {
@@ -143,7 +157,7 @@ function CameraController({
     map.setMaxBounds(bounds);
     // Afastar trava na vista da cidade inteira.
     if (hasSize(map)) map.setMinZoom(map.getBoundsZoom(bounds));
-  }, [map, free, limitKey]);
+  }, [map, free, limitKey, mapHeight]);
 
   const lat = value?.lat;
   const lng = value?.lng;
@@ -260,6 +274,7 @@ export default function LeafletAddressMap({
           value={value}
           zoom={zoom}
           recenterKey={recenterKey}
+          mapHeight={mapHeight}
           stage={stage}
           viewBounds={viewBounds}
           limitBounds={limitBounds}

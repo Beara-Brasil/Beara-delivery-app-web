@@ -186,7 +186,10 @@ describe("LeafletAddressMap", () => {
 
     it("roda do mouse dá zoom só na etapa livre", () => {
       // `addHooks` roda quando o handler da roda é ligado.
-      const wheelOn = vi.spyOn(L.Map.ScrollWheelZoom.prototype, "addHooks");
+      const wheelOn = vi.spyOn(
+        (L.Map as unknown as { ScrollWheelZoom: typeof L.Handler }).ScrollWheelZoom.prototype,
+        "addHooks",
+      );
       const { rerender } = render(
         <LeafletAddressMap value={null} onSelect={vi.fn()} stage="city" viewBounds={ES} />,
       );
