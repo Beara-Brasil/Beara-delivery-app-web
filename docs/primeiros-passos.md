@@ -62,7 +62,18 @@ Confira na Vercel antes de confiar, porque isso muda.
   Hobby plan", LDMF-472) e os deploys eram disparados à mão. Em 09/11/2026 o
   PR 278 ganhou preview sozinho nos três projetos. Confira no comentário do
   bot da Vercel no PR: se ele não aparecer, dispare o deploy à mão.
-- O deploy do `teste.beara.com.br` é manual (LDMF-481).
+- **O deploy do `teste.beara.com.br` hoje é automático.** Era manual
+  (LDMF-481). Em 26 e 27/11/2026, cada push na `kauan/teste-integrado` foi
+  publicado sozinho, sem ninguém disparar: conferido pelo texto novo da
+  prévia do link, que apareceu no site logo depois do push.
+  - **Por quê, provavelmente:** o bloqueio de 07/11 era da Vercel para
+    "private GitHub organization repository on the Hobby plan". Em 27/11 o
+    repositório está **público** no GitHub; com isso o bloqueio não se
+    aplica. Não foi conferido quando a visibilidade mudou.
+  - **Não é Playwright nem GitHub Actions:** o repositório não tem
+    `.github/workflows` nem `vercel.json`; o Playwright só roda os testes
+    e2e. Quem publica é a integração da Vercel com o GitHub.
+  - Se o repositório voltar a ser privado, o deploy volta a ser manual.
 - Já aconteceu de alguém testar um deploy antigo achando que era o novo
   (LDMF-481). Antes de testar, confira **qual commit** está publicado.
 - "Pronto e testado" no `CLAUDE.md` significa testado por uma pessoa no

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, MapPin } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,27 +61,24 @@ export function DeliveryForm({
           (event.currentTarget as HTMLElement | null)?.focus?.();
         }}
       >
-        <DialogHeader className="relative shrink-0 items-center gap-1.5 border-b border-border px-5 pt-5 pb-4 text-center sm:text-center">
+        {/* Uma linha só (Voltar + título): no celular o cabeçalho fica preso
+            em cima dos campos, e ícone e subtítulo gastavam ~90 px (pedido
+            do produto, 27/11). A descrição fica para o leitor de tela. */}
+        <DialogHeader className="relative flex min-h-14 shrink-0 flex-row items-center justify-center border-b border-border px-14 py-2 text-center sm:text-center">
           <DialogClose asChild>
             <button
               type="button"
               aria-label="Voltar"
               disabled={isSavingAddress}
-              className="absolute top-3 left-3 grid size-11 cursor-pointer place-items-center rounded-full border border-border bg-background text-foreground shadow-sm transition-colors hover:bg-muted disabled:opacity-50"
+              className="absolute top-1/2 left-2 grid size-11 -translate-y-1/2 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted disabled:opacity-50"
             >
               <ChevronLeft className="size-5" aria-hidden />
             </button>
           </DialogClose>
-          <span
-            className="mb-1 grid size-14 place-items-center rounded-full bg-brand-50 text-brand-500 dark:bg-brand-950/40"
-            aria-hidden
-          >
-            <MapPin className="size-6" />
-          </span>
-          <DialogTitle className="text-lg font-extrabold tracking-tight">
+          <DialogTitle className="text-base leading-tight font-extrabold tracking-tight">
             {isEditing ? "Editar Endereço" : "Adicionar Novo Endereço"}
           </DialogTitle>
-          <DialogDescription className="max-w-[34ch] text-[13.5px] leading-snug">
+          <DialogDescription className="sr-only">
             Comece pelo CEP. Sem CEP, preencha a rua e o bairro: o mapa mostra
             o local na hora.
           </DialogDescription>
