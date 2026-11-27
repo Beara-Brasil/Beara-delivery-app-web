@@ -204,6 +204,41 @@ describe("DeliveryAddressForm (núcleo de endereço)", () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
+  it("sem CEP, a rua preenche o CEP aqui também (LDMF-542)", async () => {
+    // Antes, a gaveta (CEP opcional) não buscava o CEP pela rua: o pino e o
+    // "Usar minha localização" preenchiam a rua e o CEP ficava vazio.
+    vi.mocked(getNeighborhoods).mockResolvedValue(null);
+    fetchMock.mockImplementation((url: string) =>
+      /viacep\.com\.br\/ws\/ES/.test(String(url))
+        ? cepResponse([
+            { cep: "29360-010", logradouro: "Avenida Brasil", complemento: "", bairro: "Centro" },
+          ])
+        : cepResponse({}, 404),
+    );
+    renderForm();
+    await chooseCastelo();
+    await userEvent.type(screen.getByLabelText("Bairro *"), "Centro");
+    await userEvent.type(screen.getByLabelText("Nome da rua *"), "Av. Brasil");
+
+    await waitFor(
+      () => expect((screen.getByLabelText("CEP") as HTMLInputElement).value).toBe("29360-010"),
+      { timeout: 4000 },
+    );
+  });
+
+  it("sem CEP achado: o aviso não manda digitar para salvar (CEP opcional)", async () => {
+    vi.mocked(getNeighborhoods).mockResolvedValue(null);
+    fetchMock.mockImplementation(() => cepResponse([]));
+    renderForm();
+    await chooseCastelo();
+    await userEvent.type(screen.getByLabelText("Bairro *"), "Centro");
+    await userEvent.type(screen.getByLabelText("Nome da rua *"), "Rua Que Nao Existe");
+
+    expect(
+      await screen.findByText("Não achamos o CEP desta rua. Se souber, digite.", {}, { timeout: 4000 }),
+    ).toBeTruthy();
+  });
+
   it("CEP incompleto não salva", async () => {
     vi.mocked(getNeighborhoods).mockResolvedValue(null);
     const onSave = renderForm();

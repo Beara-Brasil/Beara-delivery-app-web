@@ -117,6 +117,8 @@ export type StreetCepQuery = {
   /** Logradouro completo ("Rua Sete de Setembro"). */
   street: string;
   neighborhood?: string;
+  /** Número da casa: em rua com CEP por faixa ("até 218 - lado par"). */
+  number?: string;
 };
 
 /** Nome da via sem o tipo, para a segunda tentativa. */
@@ -127,11 +129,39 @@ function withoutStreetType(street: string) {
   );
 }
 
+type StreetCepResult = {
+  cep: string;
+  bairro: string;
+  logradouro: string;
+  complemento: string;
+};
+
+const keyOf = (value: string) =>
+  value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
+
+/**
+ * Memória da sessão (LDMF-542): uma consulta por rua. Trocar o número ou o
+ * bairro escolhe de novo na lista guardada, sem ir à ViaCEP.
+ */
+const streetResults = new Map<string, StreetCepResult[]>();
+/** Cidade de CEP único já vista: as outras ruas dela nem consultam. */
+const cityWideCep = new Map<string, string>();
+
+/** Limpa a memória (testes). */
+export function resetStreetCepCache() {
+  streetResults.clear();
+  cityWideCep.clear();
+}
+
 async function searchViaCepByStreet(
   state: string,
   city: string,
   street: string,
-): Promise<{ cep: string; bairro: string }[]> {
+): Promise<StreetCepResult[]> {
+  const cacheKey = [state, keyOf(city), keyOf(street)].join("|");
+  const cached = streetResults.get(cacheKey);
+  if (cached) return cached;
+
   const path = [state, city, street].map((part) => encodeURIComponent(part.trim()));
   const response = await fetch(`https://viacep.com.br/ws/${path.join("/")}/json/`);
   if (!response.ok) return [];
@@ -139,19 +169,70 @@ async function searchViaCepByStreet(
   const data: unknown = await response.json();
   if (!Array.isArray(data)) return [];
 
-  return data
-    .map((item) => ({
-      cep: text((item as { cep?: unknown }).cep).replace(/\D/g, ""),
-      bairro: text((item as { bairro?: unknown }).bairro),
-    }))
+  const results = data
+    .map((item) => {
+      const row = item as Record<string, unknown>;
+      return {
+        cep: text(row.cep).replace(/\D/g, ""),
+        bairro: text(row.bairro),
+        logradouro: text(row.logradouro),
+        complemento: text(row.complemento),
+      };
+    })
     .filter((item) => item.cep.length === 8);
+  // Só guarda o que achou: sem resultado, a próxima tentativa consulta de novo.
+  if (results.length) streetResults.set(cacheKey, results);
+  return results;
+}
+
+/**
+ * O número cabe na faixa do complemento da ViaCEP? Formatos medidos em
+ * Vitória: "até 218 - lado par", "de 127 a 255 - lado ímpar",
+ * "de 220 ao fim - lado par". `null` quando o complemento não é faixa (CEP
+ * de prédio ou loja, como "495 Lojas 3 e 4", ou vazio).
+ */
+export function numberFitsRange(complement: string, number: number): boolean | null {
+  const range = keyOf(complement);
+  const parity = range.includes("lado par") ? 0 : range.includes("lado impar") ? 1 : null;
+  if (parity !== null && number % 2 !== parity) return false;
+
+  const until = range.match(/^ate (\d+)/);
+  if (until) return number <= Number(until[1]);
+  const between = range.match(/^de (\d+) a (\d+)/);
+  if (between) return number >= Number(between[1]) && number <= Number(between[2]);
+  const toEnd = range.match(/^de (\d+) ao fim/);
+  if (toEnd) return number >= Number(toEnd[1]);
+  return null;
+}
+
+/** Faixa genérica da rua (sem número de prédio): serve sem saber o número. */
+const isStreetWide = (item: StreetCepResult) => !/^\d/.test(item.complemento.trim());
+
+function pickStreetCep(
+  results: StreetCepResult[],
+  neighborhood: string | undefined,
+  number: string | undefined,
+): string {
+  const houseNumber = Number.parseInt((number ?? "").replace(/\D/g, ""), 10);
+  if (Number.isFinite(houseNumber)) {
+    const inRange = results.find((item) => numberFitsRange(item.complemento, houseNumber));
+    if (inRange) return inRange.cep;
+  }
+
+  const general = results.filter(isStreetWide);
+  const pool = general.length ? general : results;
+  const sameNeighborhood = neighborhood
+    ? pool.find((item) => keyOf(item.bairro) === keyOf(neighborhood))
+    : undefined;
+  return (sameNeighborhood ?? pool[0]).cep;
 }
 
 /**
  * CEP pelo endereço, para quem não sabe o CEP (LDMF-258: "preenchido
  * automaticamente se ficar vazio"). ViaCEP, busca por UF, cidade e rua:
  * cidade de CEP único devolve o CEP da cidade (Alegre 29500-000); cidade
- * grande devolve os CEPs da rua, e vale o do bairro escolhido quando houver.
+ * grande devolve os CEPs da rua. Vale o da faixa do número, quando a rua
+ * tem CEP por faixa; senão, o do bairro escolhido; senão, o primeiro.
  * Tenta com o logradouro completo e, sem resultado, só com o nome. `null`
  * quando não acha ou a consulta falha - o cliente digita o CEP.
  */
@@ -160,9 +241,14 @@ export async function findCepByStreet({
   city,
   street,
   neighborhood,
+  number,
 }: StreetCepQuery): Promise<string | null> {
   const uf = state.trim().toUpperCase();
   if (uf.length !== 2 || !city.trim()) return null;
+
+  const cityKey = `${uf}|${keyOf(city)}`;
+  const known = cityWideCep.get(cityKey);
+  if (known) return known;
 
   const attempts = [street.trim(), withoutStreetType(street.trim())].filter(
     (value, index, all) => value.length >= 3 && all.indexOf(value) === index,
@@ -173,13 +259,12 @@ export async function findCepByStreet({
       const results = await searchViaCepByStreet(uf, city, attempt);
       if (!results.length) continue;
 
-      const key = (value: string) =>
-        value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
-      const sameNeighborhood = neighborhood
-        ? results.find((item) => key(item.bairro) === key(neighborhood))
-        : undefined;
-
-      return (sameNeighborhood ?? results[0]).cep;
+      // Uma linha sem logradouro é o CEP da cidade inteira.
+      if (results.length === 1 && !results[0].logradouro) {
+        cityWideCep.set(cityKey, results[0].cep);
+        return results[0].cep;
+      }
+      return pickStreetCep(results, neighborhood, number);
     }
   } catch {
     return null;
