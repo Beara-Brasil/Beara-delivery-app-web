@@ -94,8 +94,9 @@ export function DeliveryAddressForm({ onSave }: Props) {
     >
       {/* Título fora da rolagem: ele e o mapa ficam parados, só os campos
           rolam (LDMF-542). */}
-      <div className="shrink-0 pb-3">
-        <SheetTitle className="text-xl font-extrabold tracking-tight text-foreground">
+      {/* Na mesma linha do X de fechar (pr-8), para não gastar uma linha. */}
+      <div className="shrink-0 pr-8 pb-2">
+        <SheetTitle className="text-lg leading-tight font-extrabold tracking-tight text-foreground">
           Seu endereço
         </SheetTitle>
       </div>
