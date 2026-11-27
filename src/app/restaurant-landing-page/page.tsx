@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { BearaDeliveryFooter } from "@/components/beara-delivery/footer";
-import { BearaDeliveryMark } from "@/components/beara-delivery/mark";
 import { BearaDeliveryShell } from "@/components/beara-delivery/shell";
 
 import { FaqList } from "./_components/faq-list";
@@ -29,11 +28,6 @@ export default function RestaurantLandingPage() {
 
       <main className="flex flex-1 flex-col">
         <section className="relative overflow-hidden bg-(--bd-hero-bg) text-(--bd-hero-ink)">
-          <BearaDeliveryMark
-            decorative
-            size={640}
-            className="pointer-events-none absolute right-[-6%] bottom-[-14%] h-auto w-[min(52vw,640px)] text-(--bd-hero-mark) opacity-[.09]"
-          />
           <div
             className="pointer-events-none absolute top-[-30%] right-[-8%] aspect-square w-[min(70vw,820px)] rounded-full bg-[radial-gradient(circle,var(--bd-hero-glow)_0%,transparent_70%)]"
             aria-hidden

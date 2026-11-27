@@ -41,11 +41,6 @@ export default function RestaurantRegisterPage() {
 
       <main className="mx-auto grid w-full max-w-[1240px] flex-1 items-start gap-6 px-4 py-6 sm:px-[clamp(16px,4vw,40px)] sm:py-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10">
         <aside className="relative flex flex-col gap-5 overflow-hidden rounded-[24px] bg-(--bd-hero-bg) p-6 text-(--bd-hero-ink) sm:p-8 lg:sticky lg:top-[92px]">
-          <BearaDeliveryMark
-            decorative
-            size={360}
-            className="pointer-events-none absolute right-[-18%] bottom-[-18%] h-auto w-[min(70%,360px)] text-(--bd-hero-mark) opacity-[.09]"
-          />
           <span className="bd-mono relative self-start rounded-full bg-(--bd-surface) px-3.5 py-2 text-[13px] text-(--bd-accent)">
             {">_ CADASTRO DE RESTAURANTE"}
           </span>
