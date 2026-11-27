@@ -276,6 +276,12 @@ export const useRestaurantRegistration = () => {
       const companyResponse = await apiService.companies.create(companyPayload)
 
       if (companyResponse.success) {
+        // Mesmo motivo do createCompanyOnAccount: o cookie do passo 1 tem
+        // token de client, e o POST /company não renova. Sem sair, o
+        // próximo F5 entrava como cliente comum, com a conta já owner no
+        // banco. O login de novo traz o token de owner.
+        storeLogout()
+        void apiService.logout()
         setSubmitMessage({
           type: 'success',
           text: 'Conta de restaurante criada com sucesso! Redirecionando para login...',
