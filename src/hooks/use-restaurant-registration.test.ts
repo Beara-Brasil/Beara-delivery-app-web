@@ -181,6 +181,19 @@ describe("useRestaurantRegistration", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
+    // O cookie do /api/auth/register guarda um token de client, e o POST
+    // /company não renova o token: sem sair, o próximo F5 entra como cliente
+    // comum, mesmo com a conta já sendo owner no banco.
+    it("sucesso sai da sessão de cliente criada no cadastro", async () => {
+      const { result } = renderHook(() => useRestaurantRegistration());
+      type(result, valid);
+
+      await submit(result);
+
+      expect(api.logout).toHaveBeenCalledTimes(1);
+      expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    });
+
     it("senha fraca bloqueia sem chamar a API", async () => {
       const { result } = renderHook(() => useRestaurantRegistration());
       type(result, { ...valid, password: "fraca", confirmPassword: "fraca" });
