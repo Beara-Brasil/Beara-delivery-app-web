@@ -188,19 +188,22 @@ export function AddressMapPanel({
             {isSearchingAddress ? "Buscando endereço..." : "Localizando..."}
           </span>
         )}
-        {showUseLocation && (
-          <button
-            type="button"
-            onClick={onUseLocation}
-            disabled={locatingDevice}
-            title={`Use se você está na ${placeLabel} agora.`}
-            className="absolute right-2 bottom-2 z-[1000] inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full bg-card px-3 text-xs font-semibold text-foreground shadow-md disabled:opacity-60"
-          >
-            <LocateFixed className="size-4 text-brand-500" aria-hidden />
-            {locatingDevice ? "Localizando..." : "Usar minha localização"}
-          </button>
-        )}
       </div>
+
+      {/* Embaixo do mapa (pedido do produto). Digitando, some: o teclado já
+          ocupa a tela e o botão não serve no meio da digitação. */}
+      {showUseLocation && !typing && (
+        <button
+          type="button"
+          onClick={onUseLocation}
+          disabled={locatingDevice}
+          title={`Use se você está na ${placeLabel} agora.`}
+          className="mt-2 inline-flex min-h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted disabled:opacity-60"
+        >
+          <LocateFixed className="size-4 text-brand-500" aria-hidden />
+          {locatingDevice ? "Localizando..." : "Usar minha localização"}
+        </button>
+      )}
 
       {addressNotFound ? (
         <p role="alert" className="mt-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
