@@ -44,11 +44,15 @@ export default function RestaurantRegisterPage() {
             <ArrowLeft className="size-4" aria-hidden />
             Voltar
           </Link>
-          <Link href="/" className="flex items-center gap-2 text-(--bd-ink)" aria-label="Beara Delivery: início">
-            <BearaDeliveryMark size={30} className="size-7 shrink-0 sm:size-[30px]" />
-            <span className="hidden sm:inline">
-              <BearaDeliveryWordmark accentClassName="text-(--bd-accent)" />
-            </span>
+          {/* No celular fica só Voltar e Entrar: o ícone sozinho no meio
+              poluía o cabeçalho (pedido do produto). */}
+          <Link
+            href="/"
+            className="hidden items-center gap-2 text-(--bd-ink) sm:flex"
+            aria-label="Beara Delivery: início"
+          >
+            <BearaDeliveryMark size={30} className="size-[30px] shrink-0" />
+            <BearaDeliveryWordmark accentClassName="text-(--bd-accent)" />
           </Link>
           <Link href={LOGIN_HREF} className="inline-flex min-h-11 items-center text-[15px] font-semibold hover:text-(--bd-accent)">
             Entrar
