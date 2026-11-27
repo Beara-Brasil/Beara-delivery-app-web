@@ -8,6 +8,7 @@ import {
   setDefaultAddress,
 } from "@/lib/default-address";
 import { nominatim } from "@/lib/nominatim";
+import { resetStreetCepCache } from "@/lib/cep";
 import { readUserLocation } from "@/lib/user-location-cookie";
 import { apiService, type Address } from "@/services/api";
 import { getNeighborhoods } from "@/services/neighborhoods";
@@ -180,6 +181,7 @@ describe("useProfileManagement", () => {
       data: savedAddresses,
     }));
     nominatim.reset();
+    resetStreetCepCache();
     // mockResolvedValue de um teste não pode vazar para o próximo.
     vi.mocked(getNeighborhoods).mockImplementation(realGetNeighborhoods);
     vi.mocked(restorePendingDefaultAddress).mockResolvedValue(false);
