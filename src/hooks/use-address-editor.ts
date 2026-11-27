@@ -36,6 +36,9 @@ export const STREET_CEP_FILLED_HINT =
   "Preenchemos o CEP pela rua. Confira se está certo.";
 export const STREET_CEP_NOT_FOUND_HINT =
   "Não achamos o CEP desta rua. Digite o CEP para salvar.";
+/** Gaveta do cabeçalho: lá o CEP é opcional, dá para salvar sem ele. */
+export const STREET_CEP_NOT_FOUND_OPTIONAL_HINT =
+  "Não achamos o CEP desta rua. Se souber, digite.";
 /** Pausa depois da última tecla antes de procurar o CEP pela rua. */
 export const STREET_CEP_DELAY_MS = 1200;
 export const CEP_LOOKUP_FAILED_HINT =
@@ -209,9 +212,13 @@ export const useAddressEditor = ({
   // CEP pela rua (LDMF-258): quem não sabe o CEP preenche a rua e o CEP vem
   // da ViaCEP. Só mexe em CEP vazio ou no que ele mesmo pôs - CEP digitado
   // pelo cliente, ou o da cidade de CEP único (efeito acima), fica.
+  // Vale também na gaveta do cabeçalho, onde o CEP é opcional: o pino e o
+  // "Usar minha localização" preenchem a rua e o CEP vinha vazio (LDMF-542).
+  // Cidade de CEP único da lista não consulta (efeito acima); as outras ruas
+  // de uma cidade de CEP único e o mesmo trecho de rua usam a memória do
+  // `findCepByStreet`, sem nova consulta.
   const streetFilledCep = useRef<string | null>(null);
   useEffect(() => {
-    if (zipCodeOptional) return;
     if (addressPin.neighborhoodList?.cep) return;
 
     const street = watchedStreet?.trim() ?? "";
@@ -240,15 +247,21 @@ export const useAddressEditor = ({
         city,
         street,
         neighborhood: watchedNeighborhood,
+        number: watchedNumber,
       });
       if (!active) return;
 
       if (!cep) {
         if (!onlyNumbers(addressForm.getValues("zipCode") ?? "")) {
-          setZipCodeHint(STREET_CEP_NOT_FOUND_HINT);
+          setZipCodeHint(
+            zipCodeOptional ? STREET_CEP_NOT_FOUND_OPTIONAL_HINT : STREET_CEP_NOT_FOUND_HINT,
+          );
         }
         return;
       }
+
+      // Trocar só o número na mesma faixa: nada muda.
+      if (cep === onlyNumbers(addressForm.getValues("zipCode") ?? "")) return;
 
       streetFilledCep.current = cep;
       // Marcado como já buscado: o CEP preenchido não dispara a busca de
@@ -269,6 +282,9 @@ export const useAddressEditor = ({
     watchedCity,
     watchedState,
     watchedNeighborhood,
+    // O número só escolhe a faixa na lista já buscada (rua com CEP por
+    // número); a ViaCEP é consultada de novo só quando a rua muda.
+    watchedNumber,
     addressPin.neighborhoodList,
   ]);
 

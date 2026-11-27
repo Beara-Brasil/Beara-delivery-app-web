@@ -122,7 +122,25 @@ largo para o mais estreito (`decidePinFill`, em `src/lib/reverse-fill.ts`):
   de cidade, bairro ou CEP.
 - **Cidade nova limpa o CEP**, que era da cidade anterior. Ele volta a ser
   preenchido sozinho pela cidade de CEP único ou pela rua, como em qualquer
-  endereço.
+  endereço, **inclusive na gaveta do cabeçalho**, onde o CEP é opcional. Até
+  27/11 a gaveta não buscava o CEP pela rua, e o "Usar minha localização"
+  deixava o CEP vazio.
+
+### CEP pela rua (ViaCEP)
+
+`findCepByStreet`, em `src/lib/cep.ts`:
+
+- **Uma consulta por rua.** A resposta fica guardada na sessão: trocar o
+  número ou o bairro escolhe de novo na lista, sem consultar.
+- **Cidade de CEP único** (a ViaCEP devolve uma linha sem logradouro, como
+  Alegre 29500-000): as outras ruas da mesma cidade nem consultam. Cidade com
+  lista de bairros e CEP (Castelo) não consulta nunca.
+- **Rua com CEP por faixa de número**: vale a faixa do número. Medido na
+  Av. Nossa Senhora dos Navegantes, em Vitória: 10 CEPs, como "até 218 - lado
+  par" e "de 127 a 255 - lado ímpar". Sem número, vale o do bairro, deixando
+  de fora os CEPs de prédio ("495 Lojas 3 e 4").
+- **Não achou:** no perfil, o aviso pede o CEP para salvar. Na gaveta, onde
+  dá para salvar sem CEP, ele diz "Se souber, digite".
 - **Bairro do mapa vira o nome oficial da lista** da cidade, inclusive com
   grafia diferente: em Castelo o OpenStreetMap escreve "Bella Vista" e a lista
   tem "Bela Vista" (`matchMapNeighborhood`). Sem par na lista, o bairro entra
