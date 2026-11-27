@@ -94,13 +94,10 @@ export function DeliveryAddressForm({ onSave }: Props) {
     >
       {/* Título fora da rolagem: ele e o mapa ficam parados, só os campos
           rolam (LDMF-542). */}
-      <div className="shrink-0 space-y-1 pb-4">
+      <div className="shrink-0 pb-3">
         <SheetTitle className="text-xl font-extrabold tracking-tight text-foreground">
           Seu endereço
         </SheetTitle>
-        <p className="text-[13px] text-muted-foreground">
-          Comece pelo CEP ou escolha estado e cidade
-        </p>
       </div>
 
       <div className="-mx-4 min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pb-1 sm:-mx-6 sm:px-6">

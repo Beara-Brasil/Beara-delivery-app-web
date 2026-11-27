@@ -68,9 +68,11 @@ do que estava sendo preenchido; fixo embaixo, empilhava com o botão Salvar.
   modal do perfil. Só os campos rolam. Com o título rolando junto, o mapa
   subia até prender e parecia estranho (visto no celular em 27/11).
 - **"Usar minha localização" fica embaixo do mapa** (também na gaveta do
-  cabeçalho) e some enquanto o cliente digita. Embaixo dele fica uma linha só:
-  o aviso de endereço não encontrado, a dica de conferir o pino, ou o pedido
-  de marcar o pino.
+  cabeçalho) e some enquanto o cliente digita. Embaixo dele fica no máximo
+  uma linha: o aviso de endereço não encontrado ou a dica de conferir o pino.
+  Sem pino não tem linha, e o subtítulo da gaveta ("Comece pelo CEP...") saiu:
+  o espaço preso é curto, e salvar sem pino já avisa "Marque no mapa onde
+  fica o endereço antes de salvar" (pedido do produto, 27/11).
 
 ### De onde vêm os contornos
 
