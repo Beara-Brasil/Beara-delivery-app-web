@@ -250,6 +250,9 @@ export const useAddressEditor = ({
         number: watchedNumber,
       });
       if (!active) return;
+      // O cliente digitou um CEP enquanto a busca andava: o dele fica.
+      const typedCep = onlyNumbers(addressForm.getValues("zipCode") ?? "");
+      if (typedCep && typedCep !== streetFilledCep.current) return;
 
       if (!cep) {
         if (!onlyNumbers(addressForm.getValues("zipCode") ?? "")) {

@@ -1739,6 +1739,39 @@ describe("useProfileManagement", () => {
       expect(fetchMock.mock.calls.some(([url]) => /viacep\.com\.br\/ws\/MG/.test(String(url)))).toBe(false);
     });
 
+    it("CEP digitado enquanto a busca da rua anda não é trocado pela resposta", async () => {
+      vi.mocked(getNeighborhoods).mockResolvedValue(null);
+      let answer: () => void = () => {};
+      const viaCepAnswered = new Promise<void>((resolve) => (answer = resolve));
+      const fetchMock = vi.fn(async (url: string) => {
+        if (String(url).includes("viacep.com.br")) await viaCepAnswered;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => (String(url).includes("viacep.com.br") ? [{ cep: "30140-071", bairro: "Funcionários" }] : []),
+        };
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      const { result } = await renderProfile();
+      fillBeloHorizonte(result);
+
+      // A busca da rua saiu e está esperando a ViaCEP; o cliente digita o CEP.
+      await waitFor(
+        () => expect(fetchMock.mock.calls.some(([url]) => /viacep\.com\.br\/ws\/MG/.test(String(url)))).toBe(true),
+        { timeout: 4000 },
+      );
+      act(() => {
+        result.current.addressForm.setValue("zipCode", "30130-100");
+      });
+      await act(async () => {
+        answer();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+
+      expect(result.current.addressForm.getValues("zipCode")).toBe("30130-100");
+      expect(result.current.zipCodeHint).not.toBe("Preenchemos o CEP pela rua. Confira se está certo.");
+    });
+
     it("rua sem CEP achado: avisa para digitar o CEP", async () => {
       vi.mocked(getNeighborhoods).mockResolvedValue(null);
       stubViaCepStreet([]);
