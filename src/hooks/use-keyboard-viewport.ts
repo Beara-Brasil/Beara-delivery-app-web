@@ -21,9 +21,12 @@ export const KEYBOARD_MIN_HEIGHT = 120;
 
 export function readKeyboardViewport(
   innerHeight: number,
-  viewport: { height: number; offsetTop: number } | null | undefined,
+  viewport: { height: number; offsetTop: number; scale?: number } | null | undefined,
 ): KeyboardViewport | null {
   if (!viewport) return null;
+  // Zoom de pinça também encolhe o visualViewport (no PC e no celular). Não é
+  // teclado: a janela não deve pular para o meio da área ampliada.
+  if ((viewport.scale ?? 1) > 1.01) return null;
   const covered = innerHeight - viewport.height;
   if (covered <= KEYBOARD_MIN_HEIGHT) return null;
   return { height: viewport.height, top: viewport.offsetTop };
