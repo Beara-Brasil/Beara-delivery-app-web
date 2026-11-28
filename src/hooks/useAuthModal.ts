@@ -235,6 +235,10 @@ export function useAuthModal({
           // O código de confirmação do cadastro vai por e-mail (LDMF-294), e o
           // POST /user/complet identifica a conta pelo mesmo e-mail.
           setOtpData((prev) => ({ ...prev, email: registerData.email }));
+          // Volta a origem para o cadastro: depois de "Voltar" de um código
+          // pedido pelo login, a origem ficava "login" e o código desta conta
+          // nova tentava entrar com o e-mail e a senha da conta antiga.
+          setOtpOrigin("register");
           setStep("otp");
           setSubmitMessage({ type: "success", text: "Código de verificação enviado para seu e-mail!" });
         } else {
