@@ -92,4 +92,11 @@ describe("RestaurantRegisterPage", () => {
     expect(screen.getByRole("link", { name: "Voltar" })).toHaveAttribute("href", "/restaurant-landing-page");
     expect(container.textContent).not.toMatch(/equipe revisa/i);
   });
+
+  it("Fazer login abre o modal de login da home (openAuth=true)", () => {
+    render(<RestaurantRegisterPage />);
+
+    // A home só abre o modal com ?openAuth=true; ?auth=required não abria nada.
+    expect(screen.getByRole("link", { name: "Fazer login" })).toHaveAttribute("href", "/?openAuth=true");
+  });
 });

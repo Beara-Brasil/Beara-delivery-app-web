@@ -352,7 +352,7 @@ export function RegisterForm() {
 
         <p className="m-0 text-center text-sm text-(--bd-muted)">
           Já possui cadastro?{" "}
-          <Link href="/?auth=required" className="font-semibold text-(--bd-accent) hover:underline">
+          <Link href="/?openAuth=true" className="font-semibold text-(--bd-accent) hover:underline">
             Fazer login
           </Link>
         </p>
