@@ -163,7 +163,9 @@ pino" (`resetBaseline`). Está em `fillFromPin`, no `useAddressEditor`.
 
 A busca pelo pino passa pela mesma fila do resto (no máximo uma chamada por
 segundo, regra do servidor público) e tem cache por ponto. Só o último ponto
-marcado vale: resposta de um ponto anterior é descartada.
+marcado vale: resposta de um ponto anterior é descartada. Também é descartada
+a resposta que chega depois de o cliente mexer em Estado, Cidade, Bairro ou Rua
+enquanto ela estava na fila: o que ele fez depois vale.
 
 ## O que não foi verificado
 

@@ -2078,6 +2078,37 @@ describe("useProfileManagement", () => {
       expect(result.current.addressForm.getValues("number")).toBe("45");
     }, 10000);
 
+    it("resposta do pino que chega depois de o cliente mexer na rua não desfaz o que ele digitou", async () => {
+      vi.mocked(getNeighborhoods).mockResolvedValue(null);
+      let answer: () => void = () => {};
+      const reverseAnswered = new Promise<void>((resolve) => (answer = resolve));
+      const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+        const url = new URL(String(input));
+        if (url.pathname === "/reverse") await reverseAnswered;
+        const body =
+          url.pathname === "/reverse"
+            ? { address: { road: "Rua das Acerolas", suburb: "Centro", town: "Castelo", "ISO3166-2-lvl4": "BR-ES" } }
+            : [];
+        return { ok: true, status: 200, json: async () => body };
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      const { result } = await renderProfile();
+      fillAll(result);
+
+      placePin(result, { lat: -20.6, lng: -41.19 });
+      await waitFor(
+        () => expect(fetchMock.mock.calls.some(([input]) => new URL(String(input)).pathname === "/reverse")).toBe(true),
+        { timeout: 3000 },
+      );
+      act(() => result.current.addressForm.setValue("street", "Rua dos Ipês"));
+      await act(async () => {
+        answer();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+
+      expect(result.current.addressForm.getValues("street")).toBe("Rua dos Ipês");
+    }, 10000);
+
     it("cidade diferente: muda cidade, bairro e rua juntos; número e estado ficam", async () => {
       vi.mocked(getNeighborhoods).mockResolvedValue(null);
       stubReverse({

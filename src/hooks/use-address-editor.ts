@@ -4,7 +4,7 @@ import {
   type SourcedCoords,
 } from "@/lib/address-coordinates";
 import { CepNotFoundError, fetchCepAddress, findCepByStreet } from "@/lib/cep";
-import { parseCoords } from "@/lib/geocode";
+import { normalizeText, parseCoords } from "@/lib/geocode";
 import { nominatim } from "@/lib/nominatim";
 import { decidePinFill, matchMapNeighborhood } from "@/lib/reverse-fill";
 import { findNeighborhood, neighborhoodLabel } from "@/services/neighborhoods";
@@ -327,6 +327,11 @@ export const useAddressEditor = ({
 
   const fillFromPin = async (coords: Coords) => {
     const seq = ++pinFillSeq.current;
+    const pinFields = (values: Partial<AddressFormData>) =>
+      [values.state, values.city, values.neighborhood, values.street]
+        .map((value) => normalizeText(value ?? ""))
+        .join("|");
+    const before = pinFields(addressForm.getValues());
     let found;
     try {
       found = await nominatim.reverse(coords);
@@ -337,6 +342,9 @@ export const useAddressEditor = ({
     if (seq !== pinFillSeq.current) return;
 
     const current = addressForm.getValues();
+    // O cliente mexeu em Estado, Cidade, Bairro ou Rua enquanto a busca
+    // estava na fila (1 por segundo): o que ele fez depois vale.
+    if (pinFields(current) !== before) return;
     const list = neighborhoodListRef.current;
     const fill = decidePinFill(current, found, (a, b) => {
       // Nome oficial, alternativo ou grafia do mapa do mesmo bairro contam
