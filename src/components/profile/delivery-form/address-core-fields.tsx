@@ -1,16 +1,17 @@
 "use client";
 
 import { formatCep } from "@/utils";
-import { ChevronDown, LocateFixed, Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { AddressForm } from "@/components/profile/addresses";
-import { AddressMap } from "@/components/address-map";
 import type {
   CoordinateSource,
   SourcedCoords,
 } from "@/lib/address-coordinates";
 import type { AddressFieldLocks } from "@/hooks/use-address-fields";
+import { useMapArea } from "@/hooks/use-map-area";
+import { AddressMapPanel } from "./address-map-panel";
 import { isNoNumber, NO_NUMBER } from "@/hooks/use-form-validation";
 import type { IbgeState } from "@/services/ibge";
 import { Coords } from "@/types/restaurant";
@@ -178,6 +179,15 @@ export function AddressCoreFields({
   const [currentState, currentCity, currentNeighborhood, currentNumber] =
     addressForm.watch(["state", "city", "neighborhood", "number"]);
   const errors = addressForm.formState.errors;
+
+  // Câmera do mapa por etapa (LDMF-542): Brasil → estado → cidade travados;
+  // bairro escrito ou pino marcado solta a câmera dentro da cidade.
+  const mapArea = useMapArea({
+    state: currentState,
+    city: currentCity,
+    neighborhood: currentNeighborhood,
+    pin: addressCoords?.coords ?? null,
+  });
   // "Sem número" é o próprio valor S/N no campo: endereço salvo assim já abre
   // com a caixa marcada, e trocar rua/bairro (que limpa o número) desmarca.
   const noNumber = isNoNumber(currentNumber);
@@ -691,65 +701,22 @@ export function AddressCoreFields({
         </div>
       )}
 
-      {/* Localização no mapa */}
-      <div className="md:col-span-2 space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <label className={labelClass}>Localização no mapa</label>
-          {(isSearchingAddress || isLocatingPin) && (
-            <span role="status" className="text-xs text-muted-foreground">
-              {isSearchingAddress ? "Buscando endereço..." : "Localizando..."}
-            </span>
-          )}
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Confira se o pino está na {placeLabel}. Se não estiver, arraste.
-        </p>
-        {showUseLocation && (
-          <div className="space-y-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={locateDevice}
-              disabled={locatingDevice}
-              className="gap-2"
-            >
-              <LocateFixed className="h-4 w-4" />
-              {locatingDevice ? "Localizando..." : "Usar minha localização"}
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              Use se você está na {placeLabel} agora.
-            </p>
-            {deviceLocationError && (
-              <p role="alert" className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                {deviceLocationError}
-              </p>
-            )}
-          </div>
-        )}
-        <AddressMap
-          mapHeight={220}
-          value={addressCoords?.coords ?? null}
-          onSelect={(coords) => applyCoords(coords, "manual")}
-          zoom={pinZoom}
-          recenterKey={pinRecenterKey}
-        />
-        {addressNotFound && (
-          <p
-            role="alert"
-            className="text-xs font-medium text-amber-700 dark:text-amber-400"
-          >
-            Não encontramos esse endereço no mapa. Arraste o pino até a{" "}
-            {placeLabel}.
-          </p>
-        )}
-        {!addressCoords && (
-          <p className="text-xs font-medium text-destructive">
-            Escolha o bairro ou toque no mapa para marcar o endereço. Sem o pino
-            não dá para salvar.
-          </p>
-        )}
-      </div>
+      {/* Mapa: no topo da tela, preso ao rolar (LDMF-542). */}
+      <AddressMapPanel
+        coords={addressCoords?.coords ?? null}
+        onSelect={(coords) => applyCoords(coords, "manual")}
+        zoom={pinZoom}
+        recenterKey={pinRecenterKey}
+        mapArea={mapArea}
+        placeLabel={placeLabel}
+        isSearchingAddress={isSearchingAddress}
+        isLocatingPin={isLocatingPin}
+        addressNotFound={addressNotFound}
+        showUseLocation={showUseLocation}
+        onUseLocation={locateDevice}
+        locatingDevice={locatingDevice}
+        deviceLocationError={deviceLocationError}
+      />
 
       {/* Checkbox Padrão */}
       {showDefaultOption && (

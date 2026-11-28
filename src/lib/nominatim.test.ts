@@ -242,3 +242,58 @@ describe("findStreet: tentativas de rua (LDMF-282)", () => {
     expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("reverse (LDMF-542)", () => {
+  it("devolve UF, cidade, bairro e rua do ponto, sem número", async () => {
+    const fetchFn = vi.fn(async (_input: RequestInfo | URL) => ({
+      ok: true,
+      json: async () => ({
+        address: {
+          house_number: "902",
+          road: "Rua Carlos Moreira Lima",
+          suburb: "Monte Belo",
+          city: "Vitória",
+          state: "Espírito Santo",
+          "ISO3166-2-lvl4": "BR-ES",
+        },
+      }),
+    }) as Response);
+    const clock = fakeClock();
+    const client = createNominatimClient({ fetchFn, ...clock });
+
+    const found = await client.reverse({ lat: -20.3155, lng: -40.3128 });
+
+    expect(found).toEqual({ state: "ES", city: "Vitória", neighborhood: "Monte Belo", street: "Rua Carlos Moreira Lima" });
+    const url = new URL(String(fetchFn.mock.calls[0][0]));
+    expect(url.pathname).toBe("/reverse");
+    expect(url.searchParams.get("lat")).toBe("-20.31550");
+  });
+
+  it("cidade pequena vem como town; sem rua, a rua fica null", async () => {
+    const fetchFn = vi.fn(async (_input: RequestInfo | URL) => ({
+      ok: true,
+      json: async () => ({ address: { suburb: "Niterói", town: "Castelo", state: "Espírito Santo" } }),
+    }) as Response);
+    const client = createNominatimClient({ fetchFn, ...fakeClock() });
+
+    expect(await client.reverse({ lat: -20.6, lng: -41.18 })).toEqual({
+      state: "ES",
+      city: "Castelo",
+      neighborhood: "Niterói",
+      street: null,
+    });
+  });
+
+  it("o mesmo ponto não é pedido duas vezes e respeita 1 chamada por segundo", async () => {
+    const fetchFn = vi.fn(async (_input: RequestInfo | URL) => ({ ok: true, json: async () => ({ address: { town: "Castelo" } }) }) as Response);
+    const clock = fakeClock();
+    const client = createNominatimClient({ fetchFn, ...clock });
+
+    await client.reverse({ lat: -20.6, lng: -41.18 });
+    await client.reverse({ lat: -20.6, lng: -41.18 });
+    await client.reverse({ lat: -20.7, lng: -41.18 });
+
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(clock.sleeps).toEqual([1000]);
+  });
+});

@@ -6,10 +6,7 @@ import { AddressCoreFields } from "@/components/profile/delivery-form/address-co
 import { Button } from "@/components/ui/button";
 import { SheetTitle } from "@/components/ui/sheet";
 import { useAddressEditor } from "@/hooks/use-address-editor";
-import {
-  isNoNumber,
-  type AddressFormData,
-} from "@/hooks/use-form-validation";
+import { isNoNumber, type AddressFormData } from "@/hooks/use-form-validation";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -93,83 +90,86 @@ export function DeliveryAddressForm({ onSave }: Props) {
         );
       })}
       noValidate
-      className="mx-auto w-full max-w-xl space-y-4"
+      className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col"
     >
-      <div className="space-y-1">
-        <SheetTitle className="text-xl font-extrabold tracking-tight text-foreground">
+      {/* Título fora da rolagem: ele e o mapa ficam parados, só os campos
+          rolam (LDMF-542). */}
+      {/* Na mesma linha do X de fechar (pr-8), para não gastar uma linha. */}
+      <div className="shrink-0 pr-8 pb-2">
+        <SheetTitle className="text-lg leading-tight font-extrabold tracking-tight text-foreground">
           Seu endereço
         </SheetTitle>
-        <p className="text-[13px] text-muted-foreground">
-          Comece pelo CEP ou escolha estado e cidade
-        </p>
       </div>
 
-      <AddressCoreFields
-        addressForm={addressForm}
-        applyCoords={editor.applyCoords}
-        addressCoords={editor.addressCoords}
-        isLoadingCep={editor.isLoadingCep}
-        zipCodeHint={editor.zipCodeHint}
-        neighborhoodOptions={editor.neighborhoodOptions}
-        isLocatingPin={editor.isLocatingPin}
-        stateOptions={editor.stateOptions}
-        cityOptions={editor.cityOptions}
-        isLoadingCities={editor.isLoadingCities}
-        citiesError={editor.citiesError}
-        fieldLocks={editor.fieldLocks}
-        onStateChange={editor.changeState}
-        onCityChange={editor.changeCity}
-        onNeighborhoodChange={editor.changeNeighborhood}
-        isOtherNeighborhood={editor.isOtherNeighborhood}
-        isLoadingNeighborhoods={editor.isLoadingNeighborhoods}
-        onSelectOtherNeighborhood={editor.selectOtherNeighborhood}
-        onOtherNeighborhoodChange={editor.changeOtherNeighborhood}
-        isSearchingAddress={editor.isSearchingAddress}
-        addressNotFound={editor.addressNotFound}
-        streetSuggestion={editor.streetSuggestion}
-        onAcceptStreetSuggestion={editor.acceptStreetSuggestion}
-        onDismissStreetSuggestion={editor.dismissStreetSuggestion}
-        pinZoom={editor.pinZoom}
-        pinRecenterKey={editor.pinRecenterKey}
-        zipCodeRequired={false}
-        // Complemento e padrão não vão para o cookie: não mostra.
-        showComplement={false}
-        showDefaultOption={false}
-        placeLabel="posição certa"
-      />
+      <div className="-mx-4 min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pb-1 sm:-mx-6 sm:px-6">
+        <AddressCoreFields
+          addressForm={addressForm}
+          applyCoords={editor.applyCoords}
+          addressCoords={editor.addressCoords}
+          isLoadingCep={editor.isLoadingCep}
+          zipCodeHint={editor.zipCodeHint}
+          neighborhoodOptions={editor.neighborhoodOptions}
+          isLocatingPin={editor.isLocatingPin}
+          stateOptions={editor.stateOptions}
+          cityOptions={editor.cityOptions}
+          isLoadingCities={editor.isLoadingCities}
+          citiesError={editor.citiesError}
+          fieldLocks={editor.fieldLocks}
+          onStateChange={editor.changeState}
+          onCityChange={editor.changeCity}
+          onNeighborhoodChange={editor.changeNeighborhood}
+          isOtherNeighborhood={editor.isOtherNeighborhood}
+          isLoadingNeighborhoods={editor.isLoadingNeighborhoods}
+          onSelectOtherNeighborhood={editor.selectOtherNeighborhood}
+          onOtherNeighborhoodChange={editor.changeOtherNeighborhood}
+          isSearchingAddress={editor.isSearchingAddress}
+          addressNotFound={editor.addressNotFound}
+          streetSuggestion={editor.streetSuggestion}
+          onAcceptStreetSuggestion={editor.acceptStreetSuggestion}
+          onDismissStreetSuggestion={editor.dismissStreetSuggestion}
+          pinZoom={editor.pinZoom}
+          pinRecenterKey={editor.pinRecenterKey}
+          zipCodeRequired={false}
+          // Complemento e padrão não vão para o cookie: não mostra.
+          showComplement={false}
+          showDefaultOption={false}
+          placeLabel="posição certa"
+          showUseLocation
+        />
 
-      <fieldset className="space-y-2">
-        <legend className={LABEL_CLASS}>Salvar como</legend>
-        <div className="grid grid-cols-3 gap-2">
-          {ADDRESS_LABELS.map((option) => {
-            const isActive = option === label;
-            return (
-              <button
-                key={option}
-                type="button"
-                aria-pressed={isActive}
-                onClick={() => setLabel(option)}
-                className={cn(
-                  "h-11 rounded-full border text-sm font-semibold transition-colors",
-                  isActive
-                    ? "border-orange-500 bg-orange-500/10 text-orange-600 dark:text-orange-400"
-                    : "border-border bg-card text-foreground hover:border-orange-200 dark:hover:border-orange-800",
-                )}
-              >
-                {option}
-              </button>
-            );
-          })}
-        </div>
-      </fieldset>
+        <fieldset className="space-y-2">
+          <legend className={LABEL_CLASS}>Salvar como</legend>
+          <div className="grid grid-cols-3 gap-2">
+            {ADDRESS_LABELS.map((option) => {
+              const isActive = option === label;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => setLabel(option)}
+                  className={cn(
+                    "h-11 rounded-full border text-sm font-semibold transition-colors",
+                    isActive
+                      ? "border-orange-500 bg-orange-500/10 text-orange-600 dark:text-orange-400"
+                      : "border-border bg-card text-foreground hover:border-orange-200 dark:hover:border-orange-800",
+                  )}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
 
-      <Button
-        type="submit"
-        disabled={editor.isLoadingCep}
-        className="h-12 w-full rounded-xl bg-orange-500 text-[15px] font-bold text-white hover:bg-orange-600"
-      >
-        Salvar endereço
-      </Button>
+        <Button
+          type="submit"
+          disabled={editor.isLoadingCep}
+          className="h-12 w-full rounded-xl bg-orange-500 text-[15px] font-bold text-white hover:bg-orange-600"
+        >
+          Salvar endereço
+        </Button>
+      </div>
     </form>
   );
 }
