@@ -61,6 +61,12 @@ do que estava sendo preenchido; fixo embaixo, empilhava com o botão Salvar.
 - **Encolhe com o teclado**: no celular (tela de toque), com o foco num campo
   de digitação, o mapa cai para 110 px; checkbox e select não contam. Ao sair
   do campo, volta. No PC não encolhe.
+- **Tocar no mapa com o teclado aberto não muda a altura no meio do toque.**
+  O toque tira o foco do campo, e o mapa crescia antes do clique: o Leaflet
+  calculava o ponto com a vista já deslocada. Medido no iPhone 13 emulado, o
+  pino caía a 161 m do dedo; agora, a 1,8 m (o mesmo de um toque sem foco). A
+  altura muda depois do clique, ou 400 ms depois de levantar o dedo num
+  arrasto.
 - **Na tela vem primeiro, no código vem por último** (`order-first`): a ordem
   do Tab continua CEP → ... → mapa.
 - **O mapa não se mexe**: na gaveta do cabeçalho, o título "Seu endereço"

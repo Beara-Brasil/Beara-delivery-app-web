@@ -85,6 +85,56 @@ describe("AddressMapPanel (LDMF-542)", () => {
     expect(height()).toBe(MAP_HEIGHT);
   });
 
+  it("tocar no mapa com o teclado aberto não muda a altura no meio do toque", () => {
+    vi.useFakeTimers();
+    try {
+      mockPointer(true);
+      renderInForm({ scrolls: true });
+      act(() => screen.getByLabelText("Rua").focus());
+      expect(height()).toBe(MAP_HEIGHT_TYPING);
+
+      // Toque: pointerdown no mapa, o campo perde o foco, depois o clique.
+      act(() => {
+        fireEvent.pointerDown(screen.getByTestId("mapa"));
+        screen.getByLabelText("Rua").blur();
+      });
+      // O Leaflet calcula o ponto do clique com esta altura: não pode mudar.
+      expect(height()).toBe(MAP_HEIGHT_TYPING);
+
+      act(() => {
+        fireEvent.pointerUp(screen.getByTestId("mapa"));
+        fireEvent.click(screen.getByTestId("mapa"));
+      });
+      expect(height()).toBe(MAP_HEIGHT_TYPING);
+
+      // Terminado o toque, o mapa volta ao tamanho normal.
+      act(() => vi.runOnlyPendingTimers());
+      expect(height()).toBe(MAP_HEIGHT);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("arrastar o mapa (sem clique) também solta a altura ao levantar o dedo", () => {
+    vi.useFakeTimers();
+    try {
+      mockPointer(true);
+      renderInForm({ scrolls: true });
+      act(() => screen.getByLabelText("Rua").focus());
+      act(() => {
+        fireEvent.pointerDown(screen.getByTestId("mapa"));
+        screen.getByLabelText("Rua").blur();
+        fireEvent.pointerUp(window);
+      });
+      expect(height()).toBe(MAP_HEIGHT_TYPING);
+
+      act(() => vi.advanceTimersByTime(400));
+      expect(height()).toBe(MAP_HEIGHT);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("checkbox não abre teclado: o mapa não encolhe", () => {
     mockPointer(true);
     renderInForm({ scrolls: true });

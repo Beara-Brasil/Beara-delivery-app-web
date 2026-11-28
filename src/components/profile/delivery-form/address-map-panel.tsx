@@ -89,16 +89,54 @@ function useTypingInForm(ref: React.RefObject<HTMLElement | null>) {
     const touch = window.matchMedia?.("(pointer: coarse)").matches ?? false;
     if (!touch) return;
 
-    const onFocusIn = (event: FocusEvent) => setTyping(isTypingField(event.target));
+    // Toque no mapa com o teclado aberto: o toque tira o foco do campo, e o
+    // mapa crescia no meio do gesto. O Leaflet calculava o ponto com a vista
+    // já deslocada, e o pino caía a ~40 m do dedo (medido no iPhone 13
+    // emulado). Durante o toque, a altura fica; muda só quando ele termina.
+    const panel = ref.current;
+    let holding = false;
+    let pending: boolean | null = null;
+    let releaseTimer: ReturnType<typeof setTimeout> | undefined;
+    const apply = (next: boolean) => {
+      if (holding) pending = next;
+      else setTyping(next);
+    };
+    const release = (delay: number) => {
+      clearTimeout(releaseTimer);
+      releaseTimer = setTimeout(() => {
+        holding = false;
+        if (pending !== null) setTyping(pending);
+        pending = null;
+      }, delay);
+    };
+    const onPointerDown = () => {
+      clearTimeout(releaseTimer);
+      holding = true;
+    };
+    // Depois do clique do Leaflet (que roda depois deste, no mesmo evento).
+    const onClick = () => release(0);
+    // Arrasto não gera clique: solta um pouco depois de levantar o dedo.
+    const onPointerUp = () => release(400);
+
+    const onFocusIn = (event: FocusEvent) => apply(isTypingField(event.target));
     // Do Número para o Complemento não pisca: o próximo foco já é campo.
     const onFocusOut = (event: FocusEvent) =>
-      setTyping(isTypingField(event.relatedTarget) && form.contains(event.relatedTarget as Node));
+      apply(isTypingField(event.relatedTarget) && form.contains(event.relatedTarget as Node));
 
     form.addEventListener("focusin", onFocusIn);
     form.addEventListener("focusout", onFocusOut);
+    panel?.addEventListener("pointerdown", onPointerDown, true);
+    panel?.addEventListener("click", onClick, true);
+    window.addEventListener("pointerup", onPointerUp, true);
+    window.addEventListener("pointercancel", onPointerUp, true);
     return () => {
+      clearTimeout(releaseTimer);
       form.removeEventListener("focusin", onFocusIn);
       form.removeEventListener("focusout", onFocusOut);
+      panel?.removeEventListener("pointerdown", onPointerDown, true);
+      panel?.removeEventListener("click", onClick, true);
+      window.removeEventListener("pointerup", onPointerUp, true);
+      window.removeEventListener("pointercancel", onPointerUp, true);
     };
   }, [ref]);
 
