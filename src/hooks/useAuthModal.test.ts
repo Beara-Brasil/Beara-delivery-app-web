@@ -558,6 +558,28 @@ describe("useAuthModal", () => {
       expect(onClose).not.toHaveBeenCalled();
     });
 
+    it("voltar do código do login e cadastrar outra conta não loga na conta antiga", async () => {
+      const { result } = await loginInactive();
+      // Voltar da etapa do código, ir para o cadastro e criar outra conta.
+      act(() => result.current.setStep("form"));
+      act(() => result.current.setActiveTab("register"));
+      api.createUser.mockResolvedValue({ success: true });
+      type(result, validRegister);
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+      expect(result.current.step).toBe("otp");
+
+      api.verifyOtp.mockResolvedValue({ success: true });
+      api.login.mockClear();
+      act(() => result.current.setOtpData((prev) => ({ ...prev, code: "123456" })));
+      await act(async () => {
+        await result.current.handleOTPSubmit();
+      });
+
+      expect(api.login).not.toHaveBeenCalled();
+    });
+
     it("código vindo do cadastro não tenta logar", async () => {
       api.verifyOtp.mockResolvedValue({ success: true });
       const { result } = renderModal();
