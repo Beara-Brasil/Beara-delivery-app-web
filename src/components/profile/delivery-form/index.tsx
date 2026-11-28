@@ -37,7 +37,7 @@ type Props = AddressCoreFieldsProps & {
  *
  * No celular a janela ocupa a tela toda (LDMF-540): o cabeçalho fica em cima,
  * os campos rolam no meio e o Salvar fica sempre à vista no rodapé. O mapa
- * continua embaixo dos campos - em cima, ele cobria metade da tela.
+ * fica preso no topo dos campos (`AddressMapPanel`, LDMF-542).
  */
 export function DeliveryForm({
   handleCloseAddressModal,
