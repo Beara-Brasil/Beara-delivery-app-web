@@ -126,9 +126,10 @@ pequeno, medido no LDMF-479.
 
 | Serviço | Para quê | Arquivo |
 | --- | --- | --- |
-| BrasilAPI, com ViaCEP de reserva | CEP → endereço, e rua → CEP | `src/lib/cep.ts` |
-| IBGE | Estados e cidades | `src/services/ibge.ts` |
-| Nominatim (OpenStreetMap) | Endereço → posição no mapa | `src/lib/nominatim.ts` |
+| BrasilAPI, com ViaCEP de reserva | CEP → endereço | `src/lib/cep.ts` |
+| ViaCEP (busca por UF, cidade e rua) | Rua → CEP, guardado na sessão por rua (LDMF-542) | `src/lib/cep.ts` (`findCepByStreet`) |
+| IBGE | Estados e cidades; malha (contorno) do estado e da cidade para a câmera do mapa | `src/services/ibge.ts` |
+| Nominatim (OpenStreetMap) | Endereço → posição no mapa, e posição do pino → endereço (`/reverse`, LDMF-542). Máximo de 1 chamada por segundo | `src/lib/nominatim.ts` |
 | BigDataCloud | Posição do GPS → cidade, no header | `src/components/main-header/index.tsx` |
 | R2 e S3 | Fotos (só leitura; o upload passa pelo back) | `next.config.mjs` (`remotePatterns`) |
 

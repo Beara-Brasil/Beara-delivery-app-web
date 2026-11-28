@@ -20,6 +20,7 @@ Quem começou em React há pouco tempo pode ler nesta ordem:
 | 4 | [dados-e-backend.md](./dados-e-backend.md) | Como um dado sai do back e chega na tela (proxy, `apiService`, TanStack Query, Zustand, socket) |
 | 5 | [decisoes.md](./decisoes.md) | Por que algumas coisas são assim, e se devem continuar |
 | 6 | [testes-e-qualidade.md](./testes-e-qualidade.md) | Lint, build, testes, E2E, mock de notificações e armadilhas |
+| — | [mapa-do-endereco.md](./mapa-do-endereco.md) | Mapa do formulário de endereço: câmera por etapa e campos que acompanham o pino |
 | 7 | [levantamento-do-codigo.md](./levantamento-do-codigo.md) | Estado do código em 09/11/2026: o que está bom, o que precisa de atenção |
 | 8 | [estado-da-passagem.md](./estado-da-passagem.md) | Retrato do trabalho em aberto na passagem (cards, branches, divergências) |
 

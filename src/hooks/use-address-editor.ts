@@ -4,7 +4,9 @@ import {
   type SourcedCoords,
 } from "@/lib/address-coordinates";
 import { CepNotFoundError, fetchCepAddress, findCepByStreet } from "@/lib/cep";
-import { parseCoords } from "@/lib/geocode";
+import { normalizeText, parseCoords } from "@/lib/geocode";
+import { nominatim } from "@/lib/nominatim";
+import { decidePinFill, matchMapNeighborhood } from "@/lib/reverse-fill";
 import { findNeighborhood, neighborhoodLabel } from "@/services/neighborhoods";
 import { Coords } from "@/types/restaurant";
 import { onlyNumbers } from "@/utils";
@@ -34,6 +36,9 @@ export const STREET_CEP_FILLED_HINT =
   "Preenchemos o CEP pela rua. Confira se está certo.";
 export const STREET_CEP_NOT_FOUND_HINT =
   "Não achamos o CEP desta rua. Digite o CEP para salvar.";
+/** Gaveta do cabeçalho: lá o CEP é opcional, dá para salvar sem ele. */
+export const STREET_CEP_NOT_FOUND_OPTIONAL_HINT =
+  "Não achamos o CEP desta rua. Se souber, digite.";
 /** Pausa depois da última tecla antes de procurar o CEP pela rua. */
 export const STREET_CEP_DELAY_MS = 1200;
 export const CEP_LOOKUP_FAILED_HINT =
@@ -207,9 +212,13 @@ export const useAddressEditor = ({
   // CEP pela rua (LDMF-258): quem não sabe o CEP preenche a rua e o CEP vem
   // da ViaCEP. Só mexe em CEP vazio ou no que ele mesmo pôs - CEP digitado
   // pelo cliente, ou o da cidade de CEP único (efeito acima), fica.
+  // Vale também na gaveta do cabeçalho, onde o CEP é opcional: o pino e o
+  // "Usar minha localização" preenchem a rua e o CEP vinha vazio (LDMF-542).
+  // Cidade de CEP único da lista não consulta (efeito acima); as outras ruas
+  // de uma cidade de CEP único e o mesmo trecho de rua usam a memória do
+  // `findCepByStreet`, sem nova consulta.
   const streetFilledCep = useRef<string | null>(null);
   useEffect(() => {
-    if (zipCodeOptional) return;
     if (addressPin.neighborhoodList?.cep) return;
 
     const street = watchedStreet?.trim() ?? "";
@@ -238,15 +247,24 @@ export const useAddressEditor = ({
         city,
         street,
         neighborhood: watchedNeighborhood,
+        number: watchedNumber,
       });
       if (!active) return;
+      // O cliente digitou um CEP enquanto a busca andava: o dele fica.
+      const typedCep = onlyNumbers(addressForm.getValues("zipCode") ?? "");
+      if (typedCep && typedCep !== streetFilledCep.current) return;
 
       if (!cep) {
         if (!onlyNumbers(addressForm.getValues("zipCode") ?? "")) {
-          setZipCodeHint(STREET_CEP_NOT_FOUND_HINT);
+          setZipCodeHint(
+            zipCodeOptional ? STREET_CEP_NOT_FOUND_OPTIONAL_HINT : STREET_CEP_NOT_FOUND_HINT,
+          );
         }
         return;
       }
+
+      // Trocar só o número na mesma faixa: nada muda.
+      if (cep === onlyNumbers(addressForm.getValues("zipCode") ?? "")) return;
 
       streetFilledCep.current = cep;
       // Marcado como já buscado: o CEP preenchido não dispara a busca de
@@ -267,6 +285,9 @@ export const useAddressEditor = ({
     watchedCity,
     watchedState,
     watchedNeighborhood,
+    // O número só escolhe a faixa na lista já buscada (rua com CEP por
+    // número); a ViaCEP é consultada de novo só quando a rua muda.
+    watchedNumber,
     addressPin.neighborhoodList,
   ]);
 
@@ -291,11 +312,101 @@ export const useAddressEditor = ({
   }, [watchedZipCode]);
 
   /**
+   * O pino preenche os campos (LDMF-542): o cliente marcou um ponto (clique,
+   * arrasto ou "Usar minha localização"), o app busca o endereço dele e muda
+   * só o que mudou - ver `decidePinFill`. O Número nunca muda.
+   *
+   * Os campos entram direto no formulário, sem `useAddressFields.change`,
+   * que limparia o Número e o pino. E entram como "já representados no
+   * pino" (`resetBaseline`): sem isso, a busca pela rua puxaria o pino de
+   * volta para o meio da rua.
+   */
+  const pinFillSeq = useRef(0);
+  const neighborhoodListRef = useRef(addressPin.neighborhoodList);
+  neighborhoodListRef.current = addressPin.neighborhoodList;
+
+  const fillFromPin = async (coords: Coords) => {
+    const seq = ++pinFillSeq.current;
+    const pinFields = (values: Partial<AddressFormData>) =>
+      [values.state, values.city, values.neighborhood, values.street]
+        .map((value) => normalizeText(value ?? ""))
+        .join("|");
+    const before = pinFields(addressForm.getValues());
+    let found;
+    try {
+      found = await nominatim.reverse(coords);
+    } catch {
+      return; // Sem resposta: o pino fica, os campos ficam como estavam.
+    }
+    // O cliente marcou outro ponto enquanto esta busca andava.
+    if (seq !== pinFillSeq.current) return;
+
+    const current = addressForm.getValues();
+    // O cliente mexeu em Estado, Cidade, Bairro ou Rua enquanto a busca
+    // estava na fila (1 por segundo): o que ele fez depois vale.
+    if (pinFields(current) !== before) return;
+    const list = neighborhoodListRef.current;
+    const fill = decidePinFill(current, found, (a, b) => {
+      // Nome oficial, alternativo ou grafia do mapa do mesmo bairro contam
+      // como iguais.
+      const itemA = matchMapNeighborhood(list, a);
+      return !!itemA && itemA === matchMapNeighborhood(list, b);
+    });
+    if (!fill) return;
+
+    const cityChanged = fill.city !== undefined;
+    // Mesma cidade: o bairro do mapa vira o nome oficial da lista.
+    if (!cityChanged && fill.neighborhood) {
+      const item = matchMapNeighborhood(list, fill.neighborhood);
+      if (item) fill.neighborhood = item.name;
+    }
+    for (const [field, value] of Object.entries(fill) as [
+      keyof typeof fill,
+      string,
+    ][]) {
+      addressForm.setValue(field, value, { shouldValidate: true, shouldDirty: true });
+    }
+
+    if (cityChanged) {
+      // "Outro" e CEP eram da cidade anterior. O CEP sai para ser preenchido
+      // de novo (pela cidade de CEP único ou pela rua).
+      addressFields.resetOtherNeighborhood();
+      lastCepRequest.current = null;
+      autoFilledCep.current = null;
+      streetFilledCep.current = null;
+      setLastFetchedCep(null);
+      setZipCodeHint(null);
+      addressForm.setValue("zipCode", "", { shouldValidate: false, shouldDirty: true });
+    } else if (!list?.cep) {
+      // Mesma cidade, outro bairro ou outra rua: numa cidade com CEP por rua,
+      // o CEP antigo era do endereço anterior. Sai para a busca pela rua
+      // trazer o novo. Em cidade de CEP único, ele continua valendo.
+      lastCepRequest.current = null;
+      streetFilledCep.current = null;
+      setLastFetchedCep(null);
+      setZipCodeHint(null);
+      addressForm.setValue("zipCode", "", { shouldValidate: false, shouldDirty: true });
+    }
+
+    const after = addressForm.getValues();
+    addressPin.resetBaseline({
+      state: after.state,
+      city: after.city,
+      neighborhood: after.neighborhood,
+      street: after.street,
+      number: after.number,
+    });
+  };
+
+  /**
    * Registra uma coordenada respeitando a prioridade das fontes
    * (clique no mapa > geocodificação > CEP).
    */
   const applyCoords = (coords: Coords | null, source: CoordinateSource) => {
-    if (source === "manual" && coords) addressPin.clearNotice();
+    if (source === "manual" && coords) {
+      addressPin.clearNotice();
+      void fillFromPin(coords);
+    }
 
     setPin((current) => {
       const base = current

@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { CepNotFoundError, fetchCepAddress, findCepByStreet } from "./cep";
+import {
+  CepNotFoundError,
+  fetchCepAddress,
+  findCepByStreet,
+  numberFitsRange,
+  resetStreetCepCache,
+} from "./cep";
 
 /**
  * CEP com API principal e reserva (LDMF-260): BrasilAPI v2 e ViaCEP.
@@ -137,6 +143,7 @@ describe("findCepByStreet (CEP pela rua)", () => {
   const fetchMock = vi.fn();
   beforeEach(() => {
     fetchMock.mockReset();
+    resetStreetCepCache();
     vi.stubGlobal("fetch", fetchMock);
   });
   afterEach(() => vi.unstubAllGlobals());
@@ -196,5 +203,87 @@ describe("findCepByStreet (CEP pela rua)", () => {
     expect(await findCepByStreet({ state: "", city: "Castelo", street: "Rua A" })).toBeNull();
     expect(await findCepByStreet({ state: "ES", city: "Castelo", street: "Ab" })).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  // Medido na ViaCEP em 27/11: Av. Nossa Senhora dos Navegantes, Vitória.
+  const navegantes = [
+    { cep: "29050-256", logradouro: "Avenida Nossa Senhora dos Navegantes", complemento: "de 220 ao fim - lado par", bairro: "Enseada do Suá" },
+    { cep: "29052-157", logradouro: "Avenida Nossa Senhora dos Navegantes", complemento: "até 125 - lado ímpar", bairro: "Praia do Suá" },
+    { cep: "29052-150", logradouro: "Avenida Nossa Senhora dos Navegantes", complemento: "de 127 a 255 - lado ímpar", bairro: "Praia do Suá" },
+    { cep: "29052-012", logradouro: "Avenida Nossa Senhora dos Navegantes", complemento: "até 218 - lado par", bairro: "Jesus de Nazareth" },
+    { cep: "29050-959", logradouro: "Avenida Nossa Senhora dos Navegantes", complemento: "495 Lojas 3 e 4", bairro: "Enseada do Suá" },
+  ];
+  const vitoria = { state: "ES", city: "Vitória", street: "Avenida Nossa Senhora dos Navegantes" };
+
+  it("rua com CEP por faixa: vale a faixa do número (LDMF-542)", async () => {
+    fetchMock.mockReturnValue(viaCep(navegantes));
+
+    expect(await findCepByStreet({ ...vitoria, number: "300" })).toBe("29050256");
+    expect(await findCepByStreet({ ...vitoria, number: "101" })).toBe("29052157");
+    expect(await findCepByStreet({ ...vitoria, number: "201" })).toBe("29052150");
+    expect(await findCepByStreet({ ...vitoria, number: "40" })).toBe("29052012");
+  });
+
+  it("mesma rua: trocar o número ou o bairro não consulta de novo", async () => {
+    fetchMock.mockReturnValue(viaCep(navegantes));
+
+    await findCepByStreet({ ...vitoria, number: "300" });
+    await findCepByStreet({ ...vitoria, number: "101" });
+    await findCepByStreet({ ...vitoria, neighborhood: "Praia do Suá" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("nenhuma faixa serve o número: não chuta um CEP que o deixa de fora", async () => {
+    fetchMock.mockReturnValue(viaCep(navegantes.filter((item) => item.complemento !== "495 Lojas 3 e 4")));
+
+    // 301 é ímpar e passa de 255: nenhuma faixa ímpar chega lá.
+    expect(await findCepByStreet({ ...vitoria, number: "301" })).toBeNull();
+  });
+
+  it("número fora das faixas do bairro usa uma faixa que o aceita", async () => {
+    fetchMock.mockReturnValue(viaCep([
+      { cep: "29050-256", logradouro: "Avenida Nossa Senhora dos Navegantes", complemento: "de 220 ao fim - lado par", bairro: "Enseada do Suá" },
+      { cep: "29050-000", logradouro: "Avenida Nossa Senhora dos Navegantes", complemento: "", bairro: "Enseada do Suá" },
+    ]));
+
+    // 301 é ímpar: a faixa par do bairro não serve, o CEP geral da rua sim.
+    expect(await findCepByStreet({ ...vitoria, neighborhood: "Enseada do Suá", number: "301" })).toBe("29050000");
+  });
+
+  it("sem número: ignora CEP de prédio e usa o do bairro", async () => {
+    fetchMock.mockReturnValue(viaCep(navegantes));
+
+    expect(await findCepByStreet({ ...vitoria, neighborhood: "Enseada do Suá" })).toBe("29050256");
+  });
+
+  it("cidade de CEP único: as outras ruas nem consultam", async () => {
+    fetchMock.mockReturnValue(viaCep([{ cep: "29500-000", logradouro: "", bairro: "" }]));
+
+    expect(await findCepByStreet({ state: "ES", city: "Alegre", street: "Rua A1" })).toBe("29500000");
+    expect(await findCepByStreet({ state: "ES", city: "Alegre", street: "Rua B2" })).toBe("29500000");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("numberFitsRange", () => {
+  it.each([
+    ["até 218 - lado par", 40, true],
+    ["até 218 - lado par", 41, false],
+    ["até 218 - lado par", 220, false],
+    ["de 127 a 255 - lado ímpar", 201, true],
+    ["de 127 a 255 - lado ímpar", 101, false],
+    ["de 220 ao fim - lado par", 9000, true],
+    // Os dois lados juntos (Curitiba, Rua Marechal Floriano, medido em 28/11).
+    ["até 178/179", 179, true],
+    ["até 178/179", 180, false],
+    ["de 180/181 a 929/930", 500, true],
+    ["de 180/181 a 929/930", 930, true],
+    ["de 180/181 a 929/930", 931, false],
+    ["de 10462/10463 ao fim", 10463, true],
+    ["de 10462/10463 ao fim", 10461, false],
+    ["495 Lojas 3 e 4", 495, null],
+    ["", 10, null],
+  ])("%s, número %i → %s", (complement, number, expected) => {
+    expect(numberFitsRange(complement, number)).toBe(expected);
   });
 });

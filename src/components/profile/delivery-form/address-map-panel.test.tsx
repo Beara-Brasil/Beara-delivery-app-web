@@ -1,0 +1,180 @@
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { BRAZIL_BOUNDS } from "@/lib/map-area";
+
+import {
+  AddressMapPanel,
+  MAP_HEIGHT,
+  MAP_HEIGHT_TYPING,
+} from "./address-map-panel";
+
+// O mapa de verdade (Leaflet) não importa aqui: só a altura que ele recebe.
+vi.mock("@/components/address-map", () => ({
+  AddressMap: ({ mapHeight }: { mapHeight: number }) => (
+    <div data-testid="mapa" data-height={mapHeight} />
+  ),
+}));
+
+const baseProps = {
+  coords: null,
+  onSelect: vi.fn(),
+  mapArea: { stage: "country" as const, viewBounds: BRAZIL_BOUNDS, limitBounds: null },
+  placeLabel: "sua casa",
+  onUseLocation: vi.fn(),
+  locatingDevice: false,
+  deviceLocationError: null,
+};
+
+function mockPointer(coarse: boolean) {
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn((query: string) => ({
+      matches: query.includes("coarse") ? coarse : false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })),
+  );
+}
+
+/** Formulário como o real: campos e o painel como irmãos. */
+function renderInForm({ scrolls }: { scrolls: boolean }) {
+  return render(
+    <div data-testid="janela" style={scrolls ? { overflowY: "auto", padding: "20px" } : undefined}>
+      <div>
+        <input aria-label="Rua" />
+        <input aria-label="Sem número" type="checkbox" />
+        <AddressMapPanel {...baseProps} />
+      </div>
+    </div>,
+  );
+}
+
+const height = () => Number(screen.getByTestId("mapa").dataset.height);
+const panel = () => screen.getByTestId("address-map-panel");
+
+describe("AddressMapPanel (LDMF-542)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("dentro de janela que rola, fica preso no topo por cima do padding", () => {
+    mockPointer(false);
+    renderInForm({ scrolls: true });
+
+    expect(panel().style.position).toBe("sticky");
+    expect(panel().style.top).toBe("-20px");
+    expect(panel().style.marginLeft).toBe("-20px");
+  });
+
+  it("sem janela que rola (checkout), fica no topo sem prender", () => {
+    mockPointer(false);
+    renderInForm({ scrolls: false });
+
+    expect(panel().style.position).toBe("");
+    expect(panel().className).toContain("order-first");
+  });
+
+  it("no celular, encolhe com o foco num campo de digitação e volta ao sair", () => {
+    mockPointer(true);
+    renderInForm({ scrolls: true });
+    expect(height()).toBe(MAP_HEIGHT);
+
+    act(() => screen.getByLabelText("Rua").focus());
+    expect(height()).toBe(MAP_HEIGHT_TYPING);
+
+    act(() => screen.getByLabelText("Rua").blur());
+    expect(height()).toBe(MAP_HEIGHT);
+  });
+
+  it("tocar no mapa com o teclado aberto não muda a altura no meio do toque", () => {
+    vi.useFakeTimers();
+    try {
+      mockPointer(true);
+      renderInForm({ scrolls: true });
+      act(() => screen.getByLabelText("Rua").focus());
+      expect(height()).toBe(MAP_HEIGHT_TYPING);
+
+      // Toque: pointerdown no mapa, o campo perde o foco, depois o clique.
+      act(() => {
+        fireEvent.pointerDown(screen.getByTestId("mapa"));
+        screen.getByLabelText("Rua").blur();
+      });
+      // O Leaflet calcula o ponto do clique com esta altura: não pode mudar.
+      expect(height()).toBe(MAP_HEIGHT_TYPING);
+
+      act(() => {
+        fireEvent.pointerUp(screen.getByTestId("mapa"));
+        fireEvent.click(screen.getByTestId("mapa"));
+      });
+      expect(height()).toBe(MAP_HEIGHT_TYPING);
+
+      // Terminado o toque, o mapa volta ao tamanho normal.
+      act(() => vi.runOnlyPendingTimers());
+      expect(height()).toBe(MAP_HEIGHT);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("arrastar o mapa (sem clique) também solta a altura ao levantar o dedo", () => {
+    vi.useFakeTimers();
+    try {
+      mockPointer(true);
+      renderInForm({ scrolls: true });
+      act(() => screen.getByLabelText("Rua").focus());
+      act(() => {
+        fireEvent.pointerDown(screen.getByTestId("mapa"));
+        screen.getByLabelText("Rua").blur();
+        fireEvent.pointerUp(window);
+      });
+      expect(height()).toBe(MAP_HEIGHT_TYPING);
+
+      act(() => vi.advanceTimersByTime(400));
+      expect(height()).toBe(MAP_HEIGHT);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("checkbox não abre teclado: o mapa não encolhe", () => {
+    mockPointer(true);
+    renderInForm({ scrolls: true });
+
+    act(() => screen.getByLabelText("Sem número").focus());
+    expect(height()).toBe(MAP_HEIGHT);
+  });
+
+  it("no PC, o foco num campo não encolhe o mapa", () => {
+    mockPointer(false);
+    renderInForm({ scrolls: true });
+
+    act(() => screen.getByLabelText("Rua").focus());
+    expect(height()).not.toBe(MAP_HEIGHT_TYPING);
+  });
+
+  it("Usar minha localização some enquanto digita (celular)", () => {
+    mockPointer(true);
+    render(
+      <div>
+        <input aria-label="Rua" />
+        <AddressMapPanel {...baseProps} showUseLocation />
+      </div>,
+    );
+    expect(screen.getByRole("button", { name: "Usar minha localização" })).toBeTruthy();
+
+    act(() => screen.getByLabelText("Rua").focus());
+    expect(screen.queryByRole("button", { name: "Usar minha localização" })).toBeNull();
+  });
+
+  it("Usar minha localização fica embaixo do mapa", () => {
+    mockPointer(false);
+    const onUseLocation = vi.fn();
+    render(<AddressMapPanel {...baseProps} showUseLocation onUseLocation={onUseLocation} />);
+
+    const button = screen.getByRole("button", { name: "Usar minha localização" });
+    expect(
+      screen.getByTestId("mapa").compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    fireEvent.click(button);
+    expect(onUseLocation).toHaveBeenCalledTimes(1);
+  });
+});
