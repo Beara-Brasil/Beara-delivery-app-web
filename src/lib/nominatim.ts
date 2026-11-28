@@ -86,14 +86,25 @@ export function parseReverseAddress(
   if (!address) return null;
   const clean = (value?: string) => value?.trim() || null;
 
+  // O município vem primeiro do `municipality`. Num distrito, o `village` (ou
+  // `town`) é o distrito, não a cidade: medido em Itaipava, distrito de
+  // Itapemirim-ES (village "Itaipava", municipality "Itapemirim"), e em
+  // Burarama, de Cachoeiro. Na capital nem sempre vem `municipality` (São
+  // Paulo só tem `city`), aí vale o de antes.
+  const city = clean(
+    address.municipality ?? address.city ?? address.town ?? address.village,
+  );
+  // Sem bairro no mapa, o distrito vira o bairro (Burarama não tem `suburb`).
+  const place = clean(address.city ?? address.town ?? address.village);
+  const district =
+    place && city && normalizeText(place) !== normalizeText(city) ? place : null;
+
   return {
     state: ufFrom(address),
-    city: clean(
-      address.city ?? address.town ?? address.village ?? address.municipality,
-    ),
-    neighborhood: clean(
-      address.suburb ?? address.neighbourhood ?? address.quarter,
-    ),
+    city,
+    neighborhood:
+      clean(address.suburb ?? address.neighbourhood ?? address.quarter) ??
+      district,
     street: clean(address.road),
   };
 }

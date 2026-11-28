@@ -284,6 +284,35 @@ describe("reverse (LDMF-542)", () => {
     });
   });
 
+  // Respostas reais do Nominatim, medidas em 28/11 (só os campos usados).
+  it.each([
+    [
+      "distrito com bairro (Itaipava, Itapemirim-ES)",
+      { suburb: "Itaipava", village: "Itaipava", municipality: "Itapemirim" },
+      { city: "Itapemirim", neighborhood: "Itaipava" },
+    ],
+    [
+      "distrito sem bairro vira o bairro (Burarama, Cachoeiro-ES)",
+      { village: "Burarama", municipality: "Cachoeiro de Itapemirim" },
+      { city: "Cachoeiro de Itapemirim", neighborhood: "Burarama" },
+    ],
+    [
+      "sede do município (Castelo-ES)",
+      { suburb: "Centro", town: "Castelo", municipality: "Castelo" },
+      { city: "Castelo", neighborhood: "Centro" },
+    ],
+    [
+      "capital sem municipality (São Paulo)",
+      { suburb: "Glicério", city: "São Paulo" },
+      { city: "São Paulo", neighborhood: "Glicério" },
+    ],
+  ])("cidade é o município, não o distrito: %s", async (_name, address, expected) => {
+    const fetchFn = vi.fn(async (_input: RequestInfo | URL) => ({ ok: true, json: async () => ({ address }) }) as Response);
+    const client = createNominatimClient({ fetchFn, ...fakeClock() });
+
+    expect(await client.reverse({ lat: -20.9, lng: -40.8 })).toMatchObject(expected);
+  });
+
   it("o mesmo ponto não é pedido duas vezes e respeita 1 chamada por segundo", async () => {
     const fetchFn = vi.fn(async (_input: RequestInfo | URL) => ({ ok: true, json: async () => ({ address: { town: "Castelo" } }) }) as Response);
     const clock = fakeClock();
