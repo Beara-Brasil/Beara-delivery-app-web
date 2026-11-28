@@ -38,6 +38,8 @@ describe("RestaurantLandingPage", () => {
     expect(texto).not.toMatch(/tempo de entrega/i);
     expect(texto).not.toMatch(/promo|desconto|frete grátis/i);
     expect(texto).not.toMatch(/equipe revisa/i);
+    // A lista do app não mostra toda loja recém-cadastrada.
+    expect(texto).not.toMatch(/aparece para (os )?clientes|mostra sua loja/i);
   });
 
   it("abre e fecha as perguntas frequentes com aria-expanded", () => {

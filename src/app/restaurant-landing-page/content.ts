@@ -29,14 +29,14 @@ export const STEPS = [
   },
   {
     title: "Comece a vender",
-    text: "Sua loja aparece para clientes da região. Os pedidos chegam direto no seu painel.",
+    text: "Com o cardápio e o horário prontos, os pedidos chegam direto no seu painel.",
   },
 ].map((step, i) => ({ ...step, n: String(i + 1).padStart(2, "0") }));
 
 export const ADVANTAGES = [
   {
     title: "Clientes da sua região",
-    text: "O app mostra sua loja para quem está dentro do seu raio de entrega.",
+    text: "Você define o raio de entrega e recebe pedidos de quem está dentro dele.",
   },
   {
     title: "Frete calculado por endereço",
@@ -64,9 +64,11 @@ export const FAQ = [
       "Não tem taxa de adesão: você cadastra a loja sem pagar nada. Para receber pagamentos online, conecte a conta Mercado Pago do restaurante no painel.",
   },
   {
-    question: "Em quanto tempo minha loja fica no ar?",
+    // Sem prometer que a loja aparece na hora: a lista do app não mostra toda
+    // loja recém-cadastrada (Kauan, 28/11).
+    question: "Em quanto tempo consigo começar?",
     answer:
-      "Na hora. O cadastro é imediato: monte o cardápio e o horário de funcionamento e sua loja já aparece para os clientes da região.",
+      "O cadastro é imediato e você já entra no painel. Lá você monta o cardápio e o horário de funcionamento para começar a receber pedidos.",
   },
   {
     question: "Como abro e fecho a loja?",
