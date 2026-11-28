@@ -46,7 +46,7 @@ export default function RestaurantLandingPage() {
       <LandingHeader />
 
       <main className="flex flex-1 flex-col">
-        <section className="relative overflow-hidden bg-(--bd-hero-bg) text-(--bd-hero-ink)">
+        <section className="bd-on-hero relative overflow-hidden bg-(--bd-hero-bg) text-(--bd-hero-ink)">
           <div
             className="pointer-events-none absolute top-[-30%] right-[-8%] aspect-square w-[min(70vw,820px)] rounded-full bg-[radial-gradient(circle,var(--bd-hero-glow)_0%,transparent_70%)]"
             aria-hidden
@@ -165,7 +165,7 @@ export default function RestaurantLandingPage() {
             <h2 className={sectionTitle}>Perguntas frequentes</h2>
           </div>
           <FaqList />
-          <div className="flex flex-col items-start gap-4 rounded-[20px] bg-(--bd-hero-bg) p-7 text-(--bd-hero-ink) sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col items-start gap-4 bd-on-hero rounded-[20px] bg-(--bd-hero-bg) p-7 text-(--bd-hero-ink) sm:flex-row sm:items-center sm:justify-between">
             <p className="bd-display m-0 text-2xl font-extrabold tracking-[-.02em]">
               Pronto para começar?
             </p>

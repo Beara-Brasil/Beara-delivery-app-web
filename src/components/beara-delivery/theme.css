@@ -15,6 +15,9 @@
   --bd-muted: #6b4a38;
   --bd-faint: #7a5a48;
   --bd-line: #f1dfd2;
+  /* Borda de campo: 3,77:1 no branco (WCAG 1.4.11 pede 3:1). A --bd-line
+     (1,29:1) fica para divisórias. */
+  --bd-field-line: #a07c66;
   --bd-accent: #c2410c;
   --bd-chip: #ffe7d6;
   --bd-yellow: #ffc94d;
@@ -64,6 +67,7 @@
   --bd-muted: #d2b8a8;
   --bd-faint: #bfa190;
   --bd-line: #4a3022;
+  --bd-field-line: #8a6a58;
   --bd-accent: #ff9a5c;
   --bd-chip: #4a2a18;
 
@@ -109,4 +113,10 @@
   outline: 2px solid var(--bd-accent);
   outline-offset: 3px;
   border-radius: 6px;
+}
+
+/* Sobre o laranja (--bd-hero-bg), o anel laranja-escuro dava 1,70:1. Lá o
+   anel usa a cor do texto do bloco: 6,04:1 no claro. */
+.bd .bd-on-hero :focus-visible {
+  outline-color: var(--bd-hero-ink);
 }
