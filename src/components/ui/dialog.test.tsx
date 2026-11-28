@@ -61,4 +61,25 @@ describe("DialogContent e o teclado do celular (LDMF-541)", () => {
     });
     expect(janela.style.top).toBe("");
   });
+
+  it("janela fechada não escuta o teclado; ao fechar, para de escutar", () => {
+    const add = vi.spyOn(viewport, "addEventListener");
+    const remove = vi.spyOn(viewport, "removeEventListener");
+    const janela = (open: boolean) => (
+      <Dialog open={open}>
+        <DialogContent>
+          <DialogTitle>Janela</DialogTitle>
+        </DialogContent>
+      </Dialog>
+    );
+
+    const { rerender } = render(janela(false));
+    expect(add).not.toHaveBeenCalled();
+
+    rerender(janela(true));
+    expect(add).toHaveBeenCalledTimes(2);
+
+    rerender(janela(false));
+    expect(remove).toHaveBeenCalledTimes(2);
+  });
 });

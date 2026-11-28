@@ -14,6 +14,10 @@ describe("readKeyboardViewport", () => {
     expect(readKeyboardViewport(472, { height: 472, offsetTop: 0 })).toBeNull();
   });
 
+  it("zoom de pinça não conta como teclado", () => {
+    expect(readKeyboardViewport(800, { height: 400, offsetTop: 200, scale: 2 })).toBeNull();
+  });
+
   it("sem visualViewport, não faz nada", () => {
     expect(readKeyboardViewport(812, null)).toBeNull();
   });
