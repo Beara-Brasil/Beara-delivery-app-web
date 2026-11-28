@@ -1,0 +1,122 @@
+/*
+ * Identidade Beara Delivery da landing e do cadastro de restaurantes
+ * (LDMF-538). É a mesma família do site da Beara (mesmas fontes e símbolo),
+ * com laranja e amarelo no lugar do azul e ciano. Fica num escopo próprio
+ * (.bd, aplicado pelo BearaDeliveryShell) para não mexer no brand-500 do
+ * resto do app: trocar a cor do app inteiro é decisão separada.
+ *
+ * Todo par de texto/fundo daqui passa de 4,5:1 (WCAG AA), nos dois temas.
+ */
+.bd {
+  --bd-bg: #fff6ef;
+  --bd-surface: #ffffff;
+  --bd-ink: #1c120c;
+  --bd-ink-soft: #3d2416;
+  --bd-muted: #6b4a38;
+  --bd-faint: #7a5a48;
+  --bd-line: #f1dfd2;
+  /* Borda de campo: 3,77:1 no branco (WCAG 1.4.11 pede 3:1). A --bd-line
+     (1,29:1) fica para divisórias. */
+  --bd-field-line: #a07c66;
+  --bd-accent: #c2410c;
+  --bd-chip: #ffe7d6;
+  --bd-yellow: #ffc94d;
+  --bd-on-yellow: #1c120c;
+
+  --bd-hero-bg: #f26b1d;
+  --bd-hero-ink: #1c120c;
+  --bd-hero-soft: #3d2416;
+  --bd-hero-wave: #fff6ef;
+  --bd-hero-glow: rgba(255, 255, 255, 0.28);
+
+  --bd-cta-bg: #1c120c;
+  --bd-cta-fg: #ffffff;
+  --bd-cta-hover: #3d2416;
+  --bd-step-bg: #f26b1d;
+  --bd-step-fg: #1c120c;
+
+  /* botao do painel: branco no laranja claro do mock dava 2,8:1 */
+  --bd-action-from: #c2410c;
+  --bd-action-to: #9a3412;
+
+  --bd-new-bg: #fffbea;
+  --bd-new-line: #fdefb2;
+  --bd-new-text: #b45309;
+  --bd-prep-bg: #eff5ff;
+  --bd-prep-line: #d6e4fb;
+  --bd-prep-text: #1d4ed8;
+  --bd-ready-bg: #edfcf4;
+  --bd-ready-line: #c9f1da;
+  --bd-ready-text: #047857;
+
+  --bd-footer-bg: #1c120c;
+  --bd-footer-text: #e8d5c8;
+  --bd-shadow: rgba(90, 35, 5, 0.45);
+}
+
+/*
+ * Tema escuro: fundo marrom bem escuro (o mesmo do rodapé do claro), não preto
+ * puro; laranja só como destaque. Hoje o app está travado no claro
+ * (THEME_LOCKED_TO_LIGHT), então isto aparece quando o tema for religado.
+ */
+.dark .bd {
+  --bd-bg: #1c120c;
+  --bd-surface: #2a1a12;
+  --bd-ink: #fff6ef;
+  --bd-ink-soft: #f1dfd2;
+  --bd-muted: #d2b8a8;
+  --bd-faint: #bfa190;
+  --bd-line: #4a3022;
+  --bd-field-line: #8a6a58;
+  --bd-accent: #ff9a5c;
+  --bd-chip: #4a2a18;
+
+  --bd-hero-bg: #241710;
+  --bd-hero-ink: #fff6ef;
+  --bd-hero-soft: #e8d5c8;
+  --bd-hero-wave: #1c120c;
+  --bd-hero-glow: rgba(242, 107, 29, 0.22);
+
+  --bd-cta-bg: #f26b1d;
+  --bd-cta-fg: #1c120c;
+  --bd-cta-hover: #ff9a5c;
+
+  --bd-new-bg: #2e2410;
+  --bd-new-line: #5a4416;
+  --bd-new-text: #fcd34d;
+  --bd-prep-bg: #15203a;
+  --bd-prep-line: #24365e;
+  --bd-prep-text: #93c5fd;
+  --bd-ready-bg: #0f2a1e;
+  --bd-ready-line: #1e4d36;
+  --bd-ready-text: #6ee7b7;
+
+  --bd-footer-bg: #120b07;
+  --bd-shadow: rgba(0, 0, 0, 0.6);
+}
+
+.bd {
+  background: var(--bd-bg);
+  color: var(--bd-ink);
+  font-family: var(--font-bd-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.bd .bd-display {
+  font-family: var(--font-bd-display), ui-sans-serif, system-ui, sans-serif;
+}
+
+.bd .bd-mono {
+  font-family: var(--font-bd-mono), ui-monospace, monospace;
+}
+
+.bd :focus-visible {
+  outline: 2px solid var(--bd-accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Sobre o laranja (--bd-hero-bg), o anel laranja-escuro dava 1,70:1. Lá o
+   anel usa a cor do texto do bloco: 6,04:1 no claro. */
+.bd .bd-on-hero :focus-visible {
+  outline-color: var(--bd-hero-ink);
+}
