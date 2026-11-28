@@ -276,6 +276,12 @@ export const useRestaurantRegistration = () => {
       const companyResponse = await apiService.companies.create(companyPayload)
 
       if (companyResponse.success) {
+        // Mesmo motivo do createCompanyOnAccount: o cookie do passo 1 tem
+        // token de client, e o POST /company não renova. Sem sair, o
+        // próximo F5 entrava como cliente comum, com a conta já owner no
+        // banco. O login de novo traz o token de owner.
+        storeLogout()
+        void apiService.logout()
         setSubmitMessage({
           type: 'success',
           text: 'Conta de restaurante criada com sucesso! Redirecionando para login...',
@@ -285,7 +291,12 @@ export const useRestaurantRegistration = () => {
           router.push('/?openAuth=true')
         }, 2000)
       } else {
-        // User was created but company failed — let the user know
+        // Conta criada e empresa recusada: sai da sessão também. A mensagem
+        // manda fazer login, e com o cookie de client a pessoa já estaria
+        // logada. Se o POST /company falhou por timeout depois de gravar, a
+        // conta já é owner, e o cookie de client traria o bug de volta.
+        storeLogout()
+        void apiService.logout()
         const errorMessage = parseErrorMessage(companyResponse.message)
         setSubmitMessage({
           type: 'error',

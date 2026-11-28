@@ -181,6 +181,18 @@ describe("useRestaurantRegistration", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
+    // O cookie do /api/auth/register guarda um token de client, e o POST
+    // /company não renova o token: sem sair, o próximo F5 entra como cliente
+    // comum, mesmo com a conta já sendo owner no banco.
+    it("sucesso sai da sessão de cliente criada no cadastro", async () => {
+      const { result } = renderHook(() => useRestaurantRegistration());
+      type(result, valid);
+
+      await submit(result);
+
+      expect(api.logout).toHaveBeenCalledTimes(1);
+    });
+
     it("senha fraca bloqueia sem chamar a API", async () => {
       const { result } = renderHook(() => useRestaurantRegistration());
       type(result, { ...valid, password: "fraca", confirmPassword: "fraca" });
@@ -297,6 +309,8 @@ describe("useRestaurantRegistration", () => {
         type: "error",
         text: "Conta criada, mas houve um erro ao cadastrar a empresa: Razão social obrigatória. Faça login e tente novamente pelo painel.",
       });
+      // A mensagem pede login: sai do cookie de client criado no passo 1.
+      expect(api.logout).toHaveBeenCalledTimes(1);
       act(() => vi.advanceTimersByTime(2999));
       expect(router.push).not.toHaveBeenCalled();
       act(() => vi.advanceTimersByTime(1));

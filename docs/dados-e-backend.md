@@ -54,6 +54,15 @@ if (res.success && res.data) {
   `/api/auth/socket-token`, chamado a **cada** conexão e reconexão
   (`src/lib/socket-auth.ts`). Um token fixo travava a reconexão depois de
   expirar.
+- **O papel (`role`) da sessão vem do token, não do banco.** A
+  `/api/auth/session` lê o `role` e o `companyId` do JWT do cookie. Se o
+  papel mudar no banco, a sessão só muda com um login novo.
+- Por isso, o cadastro de restaurante **sai da sessão** depois de criar a
+  empresa. A conta nasce `client` e vira `owner` no `POST /company`, que
+  não devolve token novo. Antes, o cadastro sem login deixava o cookie de
+  client, e a pessoa entrava como cliente comum mesmo já sendo dona.
+  Sem login, sai também quando a empresa é recusada: a mensagem pede login,
+  e um timeout do `POST /company` pode ter gravado a empresa mesmo assim.
 
 ### 3. Cache do proxy
 
