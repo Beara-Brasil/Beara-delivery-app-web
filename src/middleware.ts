@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { COURIER_ENABLED } from "@/features/courier/config";
 import { decodeJwt, isExpired } from "@/lib/jwt";
 import { CLIENT_ROLES } from "@/utils/role-helpers";
 
@@ -31,6 +32,19 @@ const PROTECTED: { prefix: string; roles?: string[]; guestAllowed?: boolean }[] 
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Área do entregador desligada (LDMF-539): 404 para todo mundo, sem login
+  // nem checagem de role. Reescreve para um caminho que não existe porque o
+  // notFound() do layout sai com status 200 - o <Suspense> do layout raiz já
+  // começou a responder. O notFound() do layout fica como segunda trava.
+  if (
+    !COURIER_ENABLED &&
+    (pathname === "/delivery-dashboard" || pathname.startsWith("/delivery-dashboard/"))
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/_area-do-entregador-desligada";
+    return NextResponse.rewrite(url);
+  }
 
   const rule = PROTECTED.find(
     (r) => pathname === r.prefix || pathname.startsWith(`${r.prefix}/`),

@@ -100,7 +100,7 @@ anterior.
 | `financial-preferences-store` | Método de pagamento padrão do caixa | Sim, **só neste navegador** |
 | `notifications-store` | Sino de notificações, por usuário | Sim |
 | `favorites-store` | Favoritos, por usuário | Sim |
-| `courier-position-store` | Última posição do entregador | Não |
+| `courier-position-store` (em `src/features/courier/stores/`) | Última posição do entregador | Não |
 | `ui-store` | Estado de interface | Não |
 
 Regra de bolso: dado do servidor vai no TanStack Query; o Zustand guarda o
@@ -116,7 +116,7 @@ Os sockets conectam **direto** do navegador ao back
 | --- | --- | --- |
 | Notificação de pedido novo (sino, som, toast) | `/orders` | `src/providers/notifications-provider.tsx` |
 | Cozinha | `/orders`, com polling de reserva se o socket cair | `src/hooks/use-kitchen-orders.ts` |
-| Entregador | rastreio da entrega | `src/hooks/use-delivery-driver.ts` |
+| Entregador | rastreio da entrega | `src/features/courier/hooks/use-delivery-driver.ts` |
 | Cliente acompanhando o pedido | rastreio da entrega | `src/components/order-status-tracker` |
 
 Na cozinha abrem duas conexões (a das notificações e a da cozinha). Custo
@@ -146,4 +146,5 @@ apagar quando o back corrigir.
 | Nota e total de avaliações da página da loja vêm do `GET /reviews`, não dos campos da loja | O back não atualiza `rating`/`totalReviews` da loja quando entra avaliação | LDMF-498 |
 | Frete da lista, das Novidades e da página da loja estimado no front com a regra do back copiada (R$ 5 até 3 km, + R$ 2/km), em `resolveStoreDeliveryFee` (`src/lib/shipping-fee.ts`); sem distância, "a partir de R$ 5,00". Tempo de entrega escondido | O back não devolve frete nem tempo antes do pedido. Se a regra mudar no back, o front erra sem aviso. Quando a API mandar `deliveryFee`, ele vale | LDMF-534 |
 | `GET /product/recent` com reserva | A rota ainda não existe | ver `RecentProduct` em `api-types.ts` |
-| Pedido do entregador à gerência desligado | A rota ainda não existe | LDMF-284 (`manager-requests.ts`) |
+| Pedido do entregador à gerência desligado | A rota ainda não existe | LDMF-284 (`src/features/courier/services/manager-requests.ts`) |
+| Cozinha mostra só "Entrega" no pedido de entrega, sem "aguardando entregador" (`src/components/kitchen/helpers.ts`), com a área do entregador desligada | O back cria uma entrega `PENDING` para todo pedido de entrega, e ela fica assim para sempre: ninguém mais a aceita. Os relatórios de entrega do back contam esses registros como pendentes | LDMF-539 |

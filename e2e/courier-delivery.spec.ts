@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { COURIER_ENABLED } from "../src/features/courier/config";
 import { loginAsCourier } from "./helpers/session";
 import { hasCourierCredentials } from "./helpers/test-config";
 
@@ -10,7 +11,19 @@ import { hasCourierCredentials } from "./helpers/test-config";
  * - Abrir diálogo de localização no cabeçalho
  * - Navegar para /delivery-dashboard/historico e /delivery-dashboard/ajustes
  */
+// Área do entregador desligada (LDMF-539): a rota responde 404. O fluxo
+// completo abaixo volta a rodar sozinho quando COURIER_ENABLED for true.
+test.describe("Entregador (Courier) - área desligada", () => {
+  test.skip(COURIER_ENABLED, "Área do entregador ligada: vale o fluxo completo.");
+
+  test("/delivery-dashboard responde 404", async ({ page }) => {
+    const resposta = await page.goto("/delivery-dashboard");
+    expect(resposta?.status()).toBe(404);
+  });
+});
+
 test.describe("Entregador (Courier) - Painel, Histórico e Ajustes", () => {
+  test.skip(!COURIER_ENABLED, "Área do entregador desligada (LDMF-539).");
   test.skip(
     !hasCourierCredentials,
     "Defina credenciais de entregador (E2E_COURIER_EMAIL / PASSWORD) para rodar.",

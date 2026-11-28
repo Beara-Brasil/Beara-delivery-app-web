@@ -32,6 +32,7 @@ import {
   UserCog,
   UserPlus,
 } from "lucide-react";
+import { COURIER_ENABLED } from "@/features/courier/config";
 
 // A ordem daqui é a ordem do seletor de função do convite, e as chaves são
 // o StaffRoleEnum do backend - função nova entra nos dois mapas junto com o
@@ -49,6 +50,12 @@ const ROLE_BADGE_CLASSES: Record<StaffRole, string> = {
   delivery: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400",
   financial: "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400",
 };
+
+// Entregador sai do convite enquanto a área está desligada (LDMF-539). Quem
+// já é entregador continua aparecendo na lista com o rótulo de sempre.
+const INVITABLE_ROLES = (Object.keys(ROLE_LABELS) as StaffRole[]).filter(
+  (role) => COURIER_ENABLED || role !== "delivery",
+);
 
 function TeamManagementContent() {
   const currentUser = useAuthStore((state) => state.user);
@@ -293,7 +300,7 @@ function TeamManagementContent() {
                 onChange={(e) => updateFormField("role", e.target.value)}
                 className="h-10 w-full rounded-xl border border-border bg-card px-3 text-xs font-medium text-foreground outline-none focus:border-brand-300 dark:focus:border-brand-700"
               >
-                {(Object.keys(ROLE_LABELS) as StaffRole[]).map((role) => (
+                {INVITABLE_ROLES.map((role) => (
                   <option key={role} value={role}>
                     {ROLE_LABELS[role]}
                   </option>

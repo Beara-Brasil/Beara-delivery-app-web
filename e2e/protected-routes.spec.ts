@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { COURIER_ENABLED } from "../src/features/courier/config";
 import { loginAsCourier, loginAsOwner, loginViaUI } from "./helpers/session";
 import {
   hasClientCredentials,
@@ -80,6 +81,13 @@ test.describe("Rotas protegidas por perfil (Middleware)", () => {
     );
 
     await loginAsOwner(page);
+
+    // Área do entregador desligada (LDMF-539): 404 para todo mundo.
+    if (!COURIER_ENABLED) {
+      const resposta = await page.goto("/delivery-dashboard");
+      expect(resposta?.status()).toBe(404);
+      return;
+    }
 
     await page.goto("/delivery-dashboard");
     await expect(page).toHaveURL(/\/unauthorized/, { timeout: 15_000 });

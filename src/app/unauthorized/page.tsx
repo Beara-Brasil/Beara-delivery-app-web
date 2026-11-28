@@ -11,6 +11,7 @@ import {
 import { useUnauthorizedPage } from "@/hooks/use-unauthorized-page";
 import { ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/utils/permissions";
 import { AlertTriangle, Home, Shield } from "lucide-react";
+import { COURIER_ENABLED } from "@/features/courier/config";
 
 export default function UnauthorizedPage() {
   const { user, isAuthenticated, isMounted, handleGoHome, handleLogin } =
@@ -102,14 +103,16 @@ export default function UnauthorizedPage() {
                     </span>
                     <span className="text-muted-foreground">Gestão de pedidos</span>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <span className="font-medium text-foreground min-w-[100px]">
-                      🚚 Entregador:
-                    </span>
-                    <span className="text-muted-foreground">
-                      Acompanhamento de entregas
-                    </span>
-                  </div>
+                  {COURIER_ENABLED && (
+                    <div className="flex items-start gap-2">
+                      <span className="font-medium text-foreground min-w-[100px]">
+                        🚚 Entregador:
+                      </span>
+                      <span className="text-muted-foreground">
+                        Acompanhamento de entregas
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-start gap-2">
                     <span className="font-medium text-foreground min-w-[100px]">
                       👤 Cliente:

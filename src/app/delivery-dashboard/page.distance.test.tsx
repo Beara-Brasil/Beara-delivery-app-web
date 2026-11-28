@@ -24,16 +24,16 @@ const { driver, confirmation, position, locationDialog } = vi.hoisted(() => ({
   locationDialog: { open: false, purpose: "" },
 }));
 
-vi.mock("@/hooks/use-delivery-driver", () => ({
+vi.mock("@/features/courier/hooks/use-delivery-driver", () => ({
   useDeliveryDriver: () => driver.current,
 }));
-vi.mock("@/hooks/use-accept-confirmation", () => ({
+vi.mock("@/features/courier/hooks/use-accept-confirmation", () => ({
   useAcceptConfirmation: () => confirmation,
 }));
-vi.mock("@/hooks/use-courier-position", () => ({
+vi.mock("@/features/courier/hooks/use-courier-position", () => ({
   useCourierPosition: () => position,
 }));
-vi.mock("@/components/delivery-dashboard/delivery-card", () => ({
+vi.mock("@/features/courier/components/delivery-card", () => ({
   DeliveryCard: ({
     delivery,
     onAccept,
@@ -46,13 +46,13 @@ vi.mock("@/components/delivery-dashboard/delivery-card", () => ({
     </button>
   ),
 }));
-vi.mock("@/components/delivery-dashboard/accept-confirm-dialog", () => ({
+vi.mock("@/features/courier/components/accept-confirm-dialog", () => ({
   AcceptConfirmDialog: () => null,
 }));
-vi.mock("@/components/delivery-dashboard/return-dialog", () => ({
+vi.mock("@/features/courier/components/return-dialog", () => ({
   ReturnDialog: () => null,
 }));
-vi.mock("@/components/delivery-dashboard/location-dialog", () => ({
+vi.mock("@/features/courier/components/location-dialog", () => ({
   LocationDialog: ({ open, purpose }: { open: boolean; purpose: string }) => {
     locationDialog.open = open;
     locationDialog.purpose = purpose;

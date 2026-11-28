@@ -15,7 +15,9 @@ src/
 │   ├── restaurant/    Uma loja (GET /company/:id no formato da tela pública)
 │   ├── restaurants/   Listagem de lojas e filtro por endereço
 │   ├── products/      Novidades, upload e duplicação de prato
-│   └── ibge.ts, neighborhoods.ts, financial-dashboard.ts, manager-requests.ts
+│   └── ibge.ts, neighborhoods.ts, financial-dashboard.ts
+├── features/
+│   └── courier/       Tudo do entregador (telas, hooks, store, regras); desligado por COURIER_ENABLED (LDMF-539)
 ├── stores/         Estado global com Zustand (sessão, carrinho, preferências)
 ├── lib/            Funções puras e regras sem tela (frete, horário, endereço, som...)
 ├── utils/          Formatação, papéis de usuário, armazenamento local
@@ -83,6 +85,10 @@ As telas de gestão usam a casca `AdminPageLayout`
 `sidebar-menu-management`.
 
 ### Entregador
+
+> Desligada por `COURIER_ENABLED = false` (`src/features/courier/config.ts`,
+> LDMF-539): as três rotas respondem 404 para todo mundo. Com a chave em
+> `true`, voltam como na tabela abaixo.
 
 | Rota | Tela | Papéis |
 | --- | --- | --- |

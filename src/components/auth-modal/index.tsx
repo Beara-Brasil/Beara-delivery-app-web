@@ -28,6 +28,7 @@ import {
   Phone,
   User,
 } from "lucide-react";
+import { COURIER_ENABLED } from "@/features/courier/config";
 
 const DEV_TEST_USERS = [
   {
@@ -202,7 +203,10 @@ export default function AuthModal({
                         <span className="text-[10px] text-muted-foreground">Clique para preencher</span>
                       </div>
                       <div className="grid grid-cols-2 gap-1.5">
-                        {DEV_TEST_USERS.map((user) => (
+                        {DEV_TEST_USERS.filter(
+                          // Área do entregador desligada (LDMF-539)
+                          (user) => COURIER_ENABLED || user.role !== "Courier",
+                        ).map((user) => (
                           <button
                             key={user.role}
                             type="button"

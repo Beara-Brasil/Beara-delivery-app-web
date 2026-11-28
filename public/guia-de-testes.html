@@ -278,7 +278,7 @@
             <td><span class="badge badge-green">Courier (Entregador)</span></td>
             <td><code>Teste+Courier@bear.com</code></td>
             <td><code>Teste@123</code></td>
-            <td>/delivery-dashboard, /delivery-dashboard/historico</td>
+            <td>/delivery-dashboard, /delivery-dashboard/historico (desligado hoje, LDMF-539)</td>
           </tr>
           <tr>
             <td><span class="badge badge-purple">Second (Gerência)</span></td>
@@ -407,6 +407,9 @@ stateDiagram-v2
       </div>
       <p style="color: var(--text-muted); font-size: 0.95rem;">
         Recepção de chamados, visualização de rotas com mapa e cálculo de distância estimada.
+      </p>
+      <p style="font-size: 0.95rem;">
+        <strong>Desligado hoje (LDMF-539):</strong> <code>/delivery-dashboard</code> responde 404 e a função Entregador some do convite de equipe. Este fluxo só vale com <code>COURIER_ENABLED = true</code> em <code>src/features/courier/config.ts</code>.
       </p>
 
       <ul class="checklist">

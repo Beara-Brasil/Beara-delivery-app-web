@@ -8,31 +8,31 @@ import { ChangePaymentMethodDialog } from "@/components/change-payment-method-di
 import {
   AcceptBlockedDialog,
   type AcceptBlock,
-} from "@/components/delivery-dashboard/accept-blocked-dialog";
-import { AcceptConfirmDialog } from "@/components/delivery-dashboard/accept-confirm-dialog";
-import { DeliveryCard } from "@/components/delivery-dashboard/delivery-card";
-import { LocationDialog } from "@/components/delivery-dashboard/location-dialog";
-import { ReturnDialog } from "@/components/delivery-dashboard/return-dialog";
+} from "@/features/courier/components/accept-blocked-dialog";
+import { AcceptConfirmDialog } from "@/features/courier/components/accept-confirm-dialog";
+import { DeliveryCard } from "@/features/courier/components/delivery-card";
+import { LocationDialog } from "@/features/courier/components/location-dialog";
+import { ReturnDialog } from "@/features/courier/components/return-dialog";
 import {
   HeaderIconButton,
   ScreenHeader,
-} from "@/components/delivery-dashboard/screen-header";
+} from "@/features/courier/components/screen-header";
 import { Button } from "@/components/ui/button";
-import { useAcceptConfirmation } from "@/hooks/use-accept-confirmation";
+import { useAcceptConfirmation } from "@/features/courier/hooks/use-accept-confirmation";
 import {
   useCourierPosition,
   type PositionFailure,
-} from "@/hooks/use-courier-position";
-import { useDeliveryDriver } from "@/hooks/use-delivery-driver";
+} from "@/features/courier/hooks/use-courier-position";
+import { useDeliveryDriver } from "@/features/courier/hooks/use-delivery-driver";
 import {
   getChangeablePayment,
   getNextStatus,
   pluralizeAvailable,
 } from "@/lib/delivery";
-import { checkAcceptDistance } from "@/lib/accept-distance";
+import { checkAcceptDistance } from "@/features/courier/lib/accept-distance";
 import { cn } from "@/lib/utils";
 import type { Delivery, PaymentMethod } from "@/services/api";
-import { PAYMENT_CHANGE_REQUEST_ENABLED } from "@/services/manager-requests";
+import { PAYMENT_CHANGE_REQUEST_ENABLED } from "@/features/courier/services/manager-requests";
 
 type Filter = "all" | "inRoute" | "toPickUp" | "available";
 
