@@ -125,6 +125,10 @@ largo para o mais estreito (`decidePinFill`, em `src/lib/reverse-fill.ts`):
   endereço, **inclusive na gaveta do cabeçalho**, onde o CEP é opcional. Até
   27/11 a gaveta não buscava o CEP pela rua, e o "Usar minha localização"
   deixava o CEP vazio.
+- **Outro bairro ou outra rua também limpam o CEP**, numa cidade com CEP por
+  rua: o CEP era do endereço anterior (medido em Vitória: o CEP da Praia do
+  Canto ficava depois de o pino ir para Santa Luíza). A busca pela rua traz o
+  novo. Em cidade de CEP único, o CEP fica.
 
 ### CEP pela rua (ViaCEP)
 

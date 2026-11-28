@@ -2048,6 +2048,36 @@ describe("useProfileManagement", () => {
       });
     }, 10000);
 
+    it("bairro diferente numa cidade com CEP por rua: o CEP antigo sai", async () => {
+      vi.mocked(getNeighborhoods).mockResolvedValue(null);
+      stubReverse({
+        road: "Rua Aleixo Netto",
+        suburb: "Santa Lúcia",
+        city: "Vitória",
+        municipality: "Vitória",
+        "ISO3166-2-lvl4": "BR-ES",
+      });
+      const { result } = await renderProfile();
+      act(() => {
+        result.current.addressForm.setValue("state", "ES");
+        result.current.addressForm.setValue("city", "Vitória");
+        result.current.addressForm.setValue("neighborhood", "Praia do Canto");
+        result.current.addressForm.setValue("street", "Rua Joaquim Lírio");
+        result.current.addressForm.setValue("number", "45");
+      });
+      // CEP já buscado (não dispara a busca do CEP de novo no teste).
+      act(() => result.current.addressForm.setValue("zipCode", "29055-130"));
+
+      placePin(result, { lat: -20.3, lng: -40.29 });
+
+      await waitFor(
+        () => expect(result.current.addressForm.getValues("neighborhood")).toBe("Santa Lúcia"),
+        { timeout: 3000 },
+      );
+      expect(result.current.addressForm.getValues("zipCode")).toBe("");
+      expect(result.current.addressForm.getValues("number")).toBe("45");
+    }, 10000);
+
     it("cidade diferente: muda cidade, bairro e rua juntos; número e estado ficam", async () => {
       vi.mocked(getNeighborhoods).mockResolvedValue(null);
       stubReverse({

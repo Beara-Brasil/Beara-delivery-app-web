@@ -369,6 +369,15 @@ export const useAddressEditor = ({
       setLastFetchedCep(null);
       setZipCodeHint(null);
       addressForm.setValue("zipCode", "", { shouldValidate: false, shouldDirty: true });
+    } else if (!list?.cep) {
+      // Mesma cidade, outro bairro ou outra rua: numa cidade com CEP por rua,
+      // o CEP antigo era do endereço anterior. Sai para a busca pela rua
+      // trazer o novo. Em cidade de CEP único, ele continua valendo.
+      lastCepRequest.current = null;
+      streetFilledCep.current = null;
+      setLastFetchedCep(null);
+      setZipCodeHint(null);
+      addressForm.setValue("zipCode", "", { shouldValidate: false, shouldDirty: true });
     }
 
     const after = addressForm.getValues();
