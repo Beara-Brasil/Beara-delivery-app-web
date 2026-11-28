@@ -42,6 +42,10 @@ mockHookState.handleRequestRemove = mockHandleRequestRemove;
 mockHookState.handleCancelRemove = mockHandleCancelRemove;
 mockHookState.handleConfirmRemove = mockHandleConfirmRemove;
 
+// Os testes desta página valem com a área do entregador desligada
+// (LDMF-539), qualquer que seja o valor real da chave.
+vi.mock("@/features/courier/config", () => ({ COURIER_ENABLED: false }));
+
 vi.mock("@/components/protected-route", () => ({
   default: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));

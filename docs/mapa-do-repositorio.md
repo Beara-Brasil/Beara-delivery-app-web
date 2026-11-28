@@ -86,6 +86,10 @@ As telas de gestão usam a casca `AdminPageLayout`
 
 ### Entregador
 
+> Desligada por `COURIER_ENABLED = false` (`src/features/courier/config.ts`,
+> LDMF-539): as três rotas respondem 404 para todo mundo. Com a chave em
+> `true`, voltam como na tabela abaixo.
+
 | Rota | Tela | Papéis |
 | --- | --- | --- |
 | `/delivery-dashboard` | Entregas disponíveis e em andamento | delivery (só ele, LDMF-324) |

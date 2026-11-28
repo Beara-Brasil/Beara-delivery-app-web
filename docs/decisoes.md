@@ -43,7 +43,7 @@ Legenda da última coluna:
 
 | Decisão | Por quê | Card | Continuar? |
 | --- | --- | --- | --- |
-| Só o entregador abre `/delivery-dashboard` | A gerência troca pagamento em Finanças, não ali | LDMF-324 | ✅ |
+| Só o entregador abre `/delivery-dashboard` (quando a área está ligada) | A gerência troca pagamento em Finanças, não ali | LDMF-324 | ✅ Vale se a chave do LDMF-539 voltar para `true`; hoje a rota responde 404 para todo mundo |
 | Área do entregador desligada (`COURIER_ENABLED = false` em `src/features/courier/config.ts`): `/delivery-dashboard` responde 404 e o entregador some de menus, convite de equipe, login de teste, cozinha e checkout | A entrega passou a ser do próprio restaurante; o gerenciamento de entregadores vai para o Beara Entregas. O código fica em `src/features/courier`, só fora de vista. No back, o pedido de entrega continua criando uma entrega `PENDING`, que fica assim quando a cozinha conclui o pedido | LDMF-539 | 🔁 Para religar, troque a chave para `true` |
 | Conta de restaurante vê o cardápio de outra loja só para leitura | Staff não compra | LDMF-473 | ✅ |
 | Staff não vê endereços nem histórico no perfil | O back não libera essas rotas para staff | LDMF-481 | ✅ |
