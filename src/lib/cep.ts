@@ -188,19 +188,26 @@ async function searchViaCepByStreet(
 /**
  * O número cabe na faixa do complemento da ViaCEP? Formatos medidos em
  * Vitória: "até 218 - lado par", "de 127 a 255 - lado ímpar",
- * "de 220 ao fim - lado par". `null` quando o complemento não é faixa (CEP
- * de prédio ou loja, como "495 Lojas 3 e 4", ou vazio).
+ * "de 220 ao fim - lado par". Com os dois lados juntos, o número vem com
+ * barra (medido em Curitiba, Rua Marechal Floriano): "até 178/179",
+ * "de 180/181 a 929/930", "de 10462/10463 ao fim". `null` quando o
+ * complemento não é faixa (CEP de prédio ou loja, como "495 Lojas 3 e 4", ou
+ * vazio).
  */
 export function numberFitsRange(complement: string, number: number): boolean | null {
   const range = keyOf(complement);
   const parity = range.includes("lado par") ? 0 : range.includes("lado impar") ? 1 : null;
   if (parity !== null && number % 2 !== parity) return false;
 
-  const until = range.match(/^ate (\d+)/);
-  if (until) return number <= Number(until[1]);
-  const between = range.match(/^de (\d+) a (\d+)/);
-  if (between) return number >= Number(between[1]) && number <= Number(between[2]);
-  const toEnd = range.match(/^de (\d+) ao fim/);
+  // "178/179": o primeiro é o começo da faixa; o último, o fim.
+  const NUM = String.raw`(\d+)(?:\/(\d+))?`;
+  const until = range.match(new RegExp(`^ate ${NUM}`));
+  if (until) return number <= Number(until[2] ?? until[1]);
+  const between = range.match(new RegExp(`^de ${NUM} a ${NUM}`));
+  if (between) {
+    return number >= Number(between[1]) && number <= Number(between[4] ?? between[3]);
+  }
+  const toEnd = range.match(new RegExp(`^de ${NUM} ao fim`));
   if (toEnd) return number >= Number(toEnd[1]);
   return null;
 }
@@ -212,15 +219,21 @@ function pickStreetCep(
   results: StreetCepResult[],
   neighborhood: string | undefined,
   number: string | undefined,
-): string {
+): string | null {
   const houseNumber = Number.parseInt((number ?? "").replace(/\D/g, ""), 10);
   if (Number.isFinite(houseNumber)) {
     const inRange = results.find((item) => numberFitsRange(item.complemento, houseNumber));
     if (inRange) return inRange.cep;
   }
 
-  const general = results.filter(isStreetWide);
-  const pool = general.length ? general : results;
+  // Faixa que deixa o número de fora não serve, nem como CEP do bairro.
+  const excludes = (item: StreetCepResult) =>
+    Number.isFinite(houseNumber) && numberFitsRange(item.complemento, houseNumber) === false;
+  const general = results.filter((item) => isStreetWide(item) && !excludes(item));
+  const pool = general.length ? general : results.filter((item) => !excludes(item));
+  // Toda faixa da rua deixa o número de fora: melhor pedir o CEP do que
+  // chutar um que já se sabe errado.
+  if (!pool.length) return null;
   const sameNeighborhood = neighborhood
     ? pool.find((item) => keyOf(item.bairro) === keyOf(neighborhood))
     : undefined;

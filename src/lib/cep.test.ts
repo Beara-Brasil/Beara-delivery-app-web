@@ -233,6 +233,23 @@ describe("findCepByStreet (CEP pela rua)", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("nenhuma faixa serve o número: não chuta um CEP que o deixa de fora", async () => {
+    fetchMock.mockReturnValue(viaCep(navegantes.filter((item) => item.complemento !== "495 Lojas 3 e 4")));
+
+    // 301 é ímpar e passa de 255: nenhuma faixa ímpar chega lá.
+    expect(await findCepByStreet({ ...vitoria, number: "301" })).toBeNull();
+  });
+
+  it("número fora das faixas do bairro usa uma faixa que o aceita", async () => {
+    fetchMock.mockReturnValue(viaCep([
+      { cep: "29050-256", logradouro: "Avenida Nossa Senhora dos Navegantes", complemento: "de 220 ao fim - lado par", bairro: "Enseada do Suá" },
+      { cep: "29050-000", logradouro: "Avenida Nossa Senhora dos Navegantes", complemento: "", bairro: "Enseada do Suá" },
+    ]));
+
+    // 301 é ímpar: a faixa par do bairro não serve, o CEP geral da rua sim.
+    expect(await findCepByStreet({ ...vitoria, neighborhood: "Enseada do Suá", number: "301" })).toBe("29050000");
+  });
+
   it("sem número: ignora CEP de prédio e usa o do bairro", async () => {
     fetchMock.mockReturnValue(viaCep(navegantes));
 
@@ -256,6 +273,14 @@ describe("numberFitsRange", () => {
     ["de 127 a 255 - lado ímpar", 201, true],
     ["de 127 a 255 - lado ímpar", 101, false],
     ["de 220 ao fim - lado par", 9000, true],
+    // Os dois lados juntos (Curitiba, Rua Marechal Floriano, medido em 28/11).
+    ["até 178/179", 179, true],
+    ["até 178/179", 180, false],
+    ["de 180/181 a 929/930", 500, true],
+    ["de 180/181 a 929/930", 930, true],
+    ["de 180/181 a 929/930", 931, false],
+    ["de 10462/10463 ao fim", 10463, true],
+    ["de 10462/10463 ao fim", 10461, false],
     ["495 Lojas 3 e 4", 495, null],
     ["", 10, null],
   ])("%s, número %i → %s", (complement, number, expected) => {

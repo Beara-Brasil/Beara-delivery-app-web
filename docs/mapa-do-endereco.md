@@ -141,8 +141,11 @@ largo para o mais estreito (`decidePinFill`, em `src/lib/reverse-fill.ts`):
   lista de bairros e CEP (Castelo) não consulta nunca.
 - **Rua com CEP por faixa de número**: vale a faixa do número. Medido na
   Av. Nossa Senhora dos Navegantes, em Vitória: 10 CEPs, como "até 218 - lado
-  par" e "de 127 a 255 - lado ímpar". Sem número, vale o do bairro, deixando
-  de fora os CEPs de prédio ("495 Lojas 3 e 4").
+  par" e "de 127 a 255 - lado ímpar". Com os dois lados juntos, vem com
+  barra ("até 178/179", "de 180/181 a 929/930", medido em Curitiba). Sem
+  número, vale o do bairro, deixando de fora os CEPs de prédio ("495 Lojas 3
+  e 4"). Faixa que deixa o número de fora nunca é escolhida: se todas deixam,
+  o CEP fica vazio e o aviso pede para digitar.
 - **Não achou:** no perfil, o aviso pede o CEP para salvar. Na gaveta, onde
   dá para salvar sem CEP, ele diz "Se souber, digite".
 - **Bairro do mapa vira o nome oficial da lista** da cidade, inclusive com
