@@ -72,7 +72,7 @@ describe("RestaurantLandingPage", () => {
     const botao = screen.getByRole("button", { name: "Abrir menu" });
     fireEvent.click(botao);
     expect(botao).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("link", { name: "Já tenho conta" })).toHaveAttribute("href", "/?auth=required");
+    expect(screen.getByRole("link", { name: "Já tenho conta" })).toHaveAttribute("href", "/?openAuth=true");
 
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.getByRole("button", { name: "Abrir menu" })).toHaveAttribute("aria-expanded", "false");

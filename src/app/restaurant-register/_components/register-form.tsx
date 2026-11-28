@@ -12,7 +12,7 @@ import { useState, type ReactNode } from "react";
 
 // Campos no tom da identidade Beara Delivery (variáveis --bd-* do theme.css).
 const fieldClass =
-  "h-12 rounded-xl border-2 border-(--bd-line) bg-(--bd-surface) text-(--bd-ink) placeholder:text-(--bd-faint) focus-visible:border-(--bd-accent) focus-visible:ring-0 transition-colors";
+  "h-12 rounded-xl border-2 border-(--bd-field-line) bg-(--bd-surface) text-(--bd-ink) placeholder:text-(--bd-faint) focus-visible:border-(--bd-accent) focus-visible:ring-0 transition-colors";
 const labelClass = "text-sm font-semibold text-(--bd-ink) cursor-pointer";
 const hintClass = "text-xs text-(--bd-muted)";
 const okClass = "flex items-center gap-1 text-xs font-semibold text-(--bd-ready-text)";
@@ -352,7 +352,7 @@ export function RegisterForm() {
 
         <p className="m-0 text-center text-sm text-(--bd-muted)">
           Já possui cadastro?{" "}
-          <Link href="/?auth=required" className="font-semibold text-(--bd-accent) hover:underline">
+          <Link href="/?openAuth=true" className="font-semibold text-(--bd-accent) hover:underline">
             Fazer login
           </Link>
         </p>

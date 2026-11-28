@@ -4,7 +4,7 @@
 // promoção ativa. Prometer o que não existe já virou problema antes.
 
 export const REGISTER_HREF = "/restaurant-register";
-export const LOGIN_HREF = "/?auth=required";
+export const LOGIN_HREF = "/?openAuth=true";
 
 export const NAV_LINKS = [
   { href: "#como-funciona", label: "Como funciona" },
