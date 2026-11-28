@@ -61,6 +61,12 @@ do que estava sendo preenchido; fixo embaixo, empilhava com o botão Salvar.
 - **Encolhe com o teclado**: no celular (tela de toque), com o foco num campo
   de digitação, o mapa cai para 110 px; checkbox e select não contam. Ao sair
   do campo, volta. No PC não encolhe.
+- **Tocar no mapa com o teclado aberto não muda a altura no meio do toque.**
+  O toque tira o foco do campo, e o mapa crescia antes do clique: o Leaflet
+  calculava o ponto com a vista já deslocada. Medido no iPhone 13 emulado, o
+  pino caía a 161 m do dedo; agora, a 1,8 m (o mesmo de um toque sem foco). A
+  altura muda depois do clique, ou 400 ms depois de levantar o dedo num
+  arrasto.
 - **Na tela vem primeiro, no código vem por último** (`order-first`): a ordem
   do Tab continua CEP → ... → mapa.
 - **O mapa não se mexe**: na gaveta do cabeçalho, o título "Seu endereço"
@@ -125,6 +131,10 @@ largo para o mais estreito (`decidePinFill`, em `src/lib/reverse-fill.ts`):
   endereço, **inclusive na gaveta do cabeçalho**, onde o CEP é opcional. Até
   27/11 a gaveta não buscava o CEP pela rua, e o "Usar minha localização"
   deixava o CEP vazio.
+- **Outro bairro ou outra rua também limpam o CEP**, numa cidade com CEP por
+  rua: o CEP era do endereço anterior (medido em Vitória: o CEP da Praia do
+  Canto ficava depois de o pino ir para Santa Luíza). A busca pela rua traz o
+  novo. Em cidade de CEP único, o CEP fica.
 
 ### CEP pela rua (ViaCEP)
 
@@ -137,8 +147,11 @@ largo para o mais estreito (`decidePinFill`, em `src/lib/reverse-fill.ts`):
   lista de bairros e CEP (Castelo) não consulta nunca.
 - **Rua com CEP por faixa de número**: vale a faixa do número. Medido na
   Av. Nossa Senhora dos Navegantes, em Vitória: 10 CEPs, como "até 218 - lado
-  par" e "de 127 a 255 - lado ímpar". Sem número, vale o do bairro, deixando
-  de fora os CEPs de prédio ("495 Lojas 3 e 4").
+  par" e "de 127 a 255 - lado ímpar". Com os dois lados juntos, vem com
+  barra ("até 178/179", "de 180/181 a 929/930", medido em Curitiba). Sem
+  número, vale o do bairro, deixando de fora os CEPs de prédio ("495 Lojas 3
+  e 4"). Faixa que deixa o número de fora nunca é escolhida: se todas deixam,
+  o CEP fica vazio e o aviso pede para digitar.
 - **Não achou:** no perfil, o aviso pede o CEP para salvar. Na gaveta, onde
   dá para salvar sem CEP, ele diz "Se souber, digite".
 - **Bairro do mapa vira o nome oficial da lista** da cidade, inclusive com
@@ -159,7 +172,9 @@ pino" (`resetBaseline`). Está em `fillFromPin`, no `useAddressEditor`.
 
 A busca pelo pino passa pela mesma fila do resto (no máximo uma chamada por
 segundo, regra do servidor público) e tem cache por ponto. Só o último ponto
-marcado vale: resposta de um ponto anterior é descartada.
+marcado vale: resposta de um ponto anterior é descartada. Também é descartada
+a resposta que chega depois de o cliente mexer em Estado, Cidade, Bairro ou Rua
+enquanto ela estava na fila: o que ele fez depois vale.
 
 ## O que não foi verificado
 
