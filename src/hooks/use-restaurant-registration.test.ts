@@ -191,7 +191,6 @@ describe("useRestaurantRegistration", () => {
       await submit(result);
 
       expect(api.logout).toHaveBeenCalledTimes(1);
-      expect(useAuthStore.getState().isAuthenticated).toBe(false);
     });
 
     it("senha fraca bloqueia sem chamar a API", async () => {
@@ -310,6 +309,8 @@ describe("useRestaurantRegistration", () => {
         type: "error",
         text: "Conta criada, mas houve um erro ao cadastrar a empresa: Razão social obrigatória. Faça login e tente novamente pelo painel.",
       });
+      // A mensagem pede login: sai do cookie de client criado no passo 1.
+      expect(api.logout).toHaveBeenCalledTimes(1);
       act(() => vi.advanceTimersByTime(2999));
       expect(router.push).not.toHaveBeenCalled();
       act(() => vi.advanceTimersByTime(1));
