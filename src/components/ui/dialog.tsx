@@ -39,11 +39,15 @@ const DialogContent = React.forwardRef<
   // Teclado do celular aberto (LDMF-541): a janela vai para o meio da área
   // que sobra acima dele e não passa dela. Assim o conteúdo rola e o campo
   // focado sobe, em vez de ficar atrás do teclado.
-  const keyboard = useKeyboardViewport();
+  // Só escuta o teclado com a janela aberta: o DialogContent fica montado
+  // com ela fechada, e o conteúdo do Radix só existe aberta.
+  const [isMounted, setIsMounted] = React.useState(false);
+  const keyboard = useKeyboardViewport(isMounted);
   const contentRef = React.useRef<HTMLDivElement | null>(null);
   const setRefs = React.useCallback(
     (node: HTMLDivElement | null) => {
       contentRef.current = node;
+      setIsMounted(node !== null);
       if (typeof ref === "function") ref(node);
       else if (ref) ref.current = node;
     },
