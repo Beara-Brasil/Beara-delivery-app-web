@@ -61,6 +61,8 @@ if (res.success && res.data) {
   empresa. A conta nasce `client` e vira `owner` no `POST /company`, que
   não devolve token novo. Antes, o cadastro sem login deixava o cookie de
   client, e a pessoa entrava como cliente comum mesmo já sendo dona.
+  Sem login, sai também quando a empresa é recusada: a mensagem pede login,
+  e um timeout do `POST /company` pode ter gravado a empresa mesmo assim.
 
 ### 3. Cache do proxy
 
